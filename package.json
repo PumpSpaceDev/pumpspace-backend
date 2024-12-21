@@ -48,7 +48,12 @@
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./apps/pumpspace-backend/test/jest-e2e.json",
-    "prepare": "pnpm dlx husky install"
+    "prepare": "pnpm dlx husky install",
+    "typeorm": "typeorm-ts-node-commonjs",
+    "migration:generate": "pnpm run typeorm -- -d src/database/typeorm.config.ts migration:generate",
+    "migration:run": "pnpm run typeorm -- -d src/database/typeorm.config.ts migration:run",
+    "migration:revert": "pnpm run typeorm -- -d src/database/typeorm.config.ts migration:revert",
+    "migration:generate:script": "ts-node scripts/generate-migration.ts"
   },
   "dependencies": {
     "@nestjs/bull": "^10.2.3",
@@ -64,6 +69,7 @@
     "cache-manager-redis-store": "^3.0.1",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.1",
+    "dotenv": "^16.4.7",
     "globals": "^15.14.0",
     "ioredis": "^5.4.2",
     "joi": "^17.13.3",
@@ -77,9 +83,12 @@
     "@nestjs/cli": "^10.0.0",
     "@nestjs/schematics": "^10.0.0",
     "@nestjs/testing": "^10.0.0",
+    "@types/bull": "^4.10.4",
     "@types/express": "^4.17.17",
+    "@types/ioredis": "^5.0.0",
     "@types/jest": "^29.5.2",
-    "@types/node": "^20.3.1",
+    "@types/joi": "^17.2.3",
+    "@types/node": "^20.17.10",
     "@types/supertest": "^6.0.0",
     "@typescript-eslint/eslint-plugin": "^8.18.1",
     "@typescript-eslint/parser": "^8.18.1",
@@ -94,8 +103,9 @@
     "supertest": "^6.3.3",
     "ts-jest": "^29.1.0",
     "ts-loader": "^9.4.3",
-    "ts-node": "^10.9.1",
+    "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0",
+    "typeorm-extension": "^3.6.3",
     "typescript": "^5.3.2"
   },
   "jest": {

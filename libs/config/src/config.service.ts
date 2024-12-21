@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService as NestConfigService } from '@nestjs/config';
 import { TypeOrmModuleOptions } from '@nestjs/typeorm';
-import { RedisClientOptions } from 'redis';
+import { RedisOptions } from 'ioredis';
 
 @Injectable()
 export class ConfigService {
@@ -20,14 +20,12 @@ export class ConfigService {
     };
   }
 
-  get redisConfig(): RedisClientOptions {
+  get redisConfig(): RedisOptions {
     return {
-      socket: {
-        host: this.configService.get<string>('REDIS_HOST'),
-        port: this.configService.get<number>('REDIS_PORT'),
-      },
+      host: this.configService.get<string>('REDIS_HOST'),
+      port: this.configService.get<number>('REDIS_PORT'),
       password: this.configService.get<string>('REDIS_PASSWORD'),
-      database: this.configService.get<number>('REDIS_DB', 0),
+      db: this.configService.get<number>('REDIS_DB', 0),
     };
   }
 
