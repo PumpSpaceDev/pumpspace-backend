@@ -52,7 +52,8 @@
     "typeorm": "typeorm-ts-node-commonjs",
     "migration:generate": "pnpm run typeorm -- -d src/database/typeorm.config.ts migration:generate",
     "migration:run": "pnpm run typeorm -- -d src/database/typeorm.config.ts migration:run",
-    "migration:revert": "pnpm run typeorm -- -d src/database/typeorm.config.ts migration:revert"
+    "migration:revert": "pnpm run typeorm -- -d src/database/typeorm.config.ts migration:revert",
+    "migration:generate:script": "ts-node scripts/generate-migration.ts"
   },
   "dependencies": {
     "@nestjs/cache-manager": "^2.3.0",
