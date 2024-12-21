@@ -1,4 +1,4 @@
 export enum SwapDirection {
-  BUY = 0,
-  SELL = 1,
+  IN = 0,
+  OUT = 1,
 }

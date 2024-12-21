@@ -26,6 +26,9 @@ export class CreateSwapDto {
   @Length(88, 88)
   signature: string;
 
+  @Type(() => Date)
+  timestamp: Date;
+
   @IsString()
   @Length(44, 44)
   signer: string;

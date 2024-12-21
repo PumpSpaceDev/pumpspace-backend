@@ -32,7 +32,11 @@ export class DataCollectorService {
         );
       }
 
-      const swap = this.swapRepository.create(createSwapDto);
+      const swap = this.swapRepository.create({
+        ...createSwapDto,
+        amountIn: createSwapDto.amountIn.toString(),
+        amountOut: createSwapDto.amountOut.toString(),
+      });
       const savedSwap = await this.swapRepository.save(swap);
 
       // Publish to Redis for real-time processing
