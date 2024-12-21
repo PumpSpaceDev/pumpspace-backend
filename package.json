@@ -50,9 +50,9 @@
     "test:e2e": "jest --config ./apps/pumpspace-backend/test/jest-e2e.json",
     "prepare": "pnpm dlx husky install",
     "typeorm": "typeorm-ts-node-commonjs",
-    "migration:generate": "npm run build && npm run typeorm -- -d src/database/typeorm.config.ts migration:generate",
-    "migration:run": "npm run build && npm run typeorm -- -d src/database/typeorm.config.ts migration:run",
-    "migration:revert": "npm run build && npm run typeorm -- -d src/database/typeorm.config.ts migration:revert"
+    "migration:generate": "pnpm run typeorm -- -d src/database/typeorm.config.ts migration:generate",
+    "migration:run": "pnpm run typeorm -- -d src/database/typeorm.config.ts migration:run",
+    "migration:revert": "pnpm run typeorm -- -d src/database/typeorm.config.ts migration:revert"
   },
   "dependencies": {
     "@nestjs/cache-manager": "^2.3.0",
