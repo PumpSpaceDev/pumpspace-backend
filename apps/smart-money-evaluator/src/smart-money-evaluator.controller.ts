@@ -33,6 +33,9 @@ export class SmartMoneyEvaluatorController {
     @Body(ValidationPipe) body: UpdateScoreDto,
   ): Promise<void> {
     this.logger.log(`Updating score for address: ${address}`);
-    await this.smartMoneyEvaluatorService.updateScore(address, BigInt(body.solBalance));
+    await this.smartMoneyEvaluatorService.updateScore(
+      address,
+      BigInt(body.solBalance),
+    );
   }
 }

@@ -45,7 +45,9 @@ export class SmartMoneyEvaluatorService {
       });
 
       if (!smartMoney) {
-        this.logger.warn(`Cannot update score for non-existent address ${address}`);
+        this.logger.warn(
+          `Cannot update score for non-existent address ${address}`,
+        );
         return;
       }
 
