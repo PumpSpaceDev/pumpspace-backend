@@ -12,7 +12,7 @@ import { Notification } from './entities/notification.entity';
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => ({
-        ...configService.getDatabaseConfig(),
+        ...configService.databaseConfig,
         entities: [Notification],
         synchronize: process.env.NODE_ENV !== 'production',
       }),
@@ -22,7 +22,7 @@ import { Notification } from './entities/notification.entity';
     BullModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => ({
-        redis: configService.getRedisConfig(),
+        redis: configService.redisConfig,
       }),
       inject: [ConfigService],
     }),

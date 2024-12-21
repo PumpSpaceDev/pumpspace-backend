@@ -14,13 +14,16 @@ export class NotificationProcessor {
     private readonly notificationRepository: Repository<Notification>,
   ) {}
 
-  @Process('process')
+  @Process({
+    name: 'process',
+    concurrency: 3,
+  })
   async handleNotification(job: Job) {
     const { notificationId, type, data } = job.data;
 
     try {
       this.logger.log(
-        `Processing notification ${notificationId} of type ${type}`,
+        `Processing notification ${notificationId} of type ${type} (attempt ${job.attemptsMade + 1})`,
       );
 
       // Here you would implement the actual notification delivery logic
@@ -32,13 +35,41 @@ export class NotificationProcessor {
         processed: true,
       });
 
-      this.logger.log(`Successfully processed notification ${notificationId}`);
+      this.logger.log(
+        `Successfully processed notification ${notificationId} after ${
+          job.attemptsMade + 1
+        } attempts`,
+      );
+
+      // Clean up the job after successful processing
+      await job.remove();
     } catch (error) {
       this.logger.error(
-        `Failed to process notification ${notificationId}:`,
+        `Failed to process notification ${notificationId} (attempt ${
+          job.attemptsMade + 1
+        }):`,
         error,
       );
-      throw error;
+
+      // If we've exceeded max retries, mark as failed but don't throw
+      if (job.attemptsMade >= 2) {
+        await this.notificationRepository.update(notificationId, {
+          processed: true,
+          data: {
+            ...job.data.data,
+            error: error.message,
+            failedAttempts: job.attemptsMade + 1,
+          },
+        });
+        this.logger.warn(
+          `Notification ${notificationId} marked as failed after ${
+            job.attemptsMade + 1
+          } attempts`,
+        );
+        return;
+      }
+
+      throw error; // Allow Bull to retry the job
     }
   }
 

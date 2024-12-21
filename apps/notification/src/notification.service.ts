@@ -19,12 +19,12 @@ export class NotificationService {
     private readonly notificationQueue: Queue,
     private readonly configService: ConfigService,
   ) {
-    this.redis = new Redis(this.configService.getRedisConfig());
+    this.redis = new Redis(this.configService.redisConfig);
     this.subscribeToSmartMoneyMatches();
   }
 
   private async subscribeToSmartMoneyMatches() {
-    const subscriber = new Redis(this.configService.getRedisConfig());
+    const subscriber = new Redis(this.configService.redisConfig);
 
     subscriber.subscribe('smart-money:matches', (err) => {
       if (err) {

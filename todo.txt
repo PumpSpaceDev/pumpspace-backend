@@ -1,0 +1,122 @@
+# PumpSpace Backend Optimization Todo List
+
+## Apps Modules
+
+### 1. Data Collector Service
+- [ ] Add error handling for gRPC data stream processing
+- [ ] Implement input validation for transaction data
+- [ ] Add configuration validation for gRPC and database connections
+- [ ] Enhance logging with proper error context
+- [ ] Add database indexing for transaction queries
+- [ ] Implement retry logic for Redis publishing
+
+### 2. Analysis & Token Statistics Service
+- [ ] Add error handling for Redis subscriptions
+- [ ] Implement retry logic for Redis connections
+- [ ] Add validation for token statistics calculations
+- [ ] Enhance bucket window documentation
+- [ ] Add proper resource cleanup on shutdown
+- [ ] Implement graceful error handling for statistical calculations
+
+### 3. Notification Service
+- [ ] Add error handling for Redis message processing
+- [ ] Implement input validation for notification data
+- [ ] Add Swagger documentation for API endpoints
+- [ ] Enhance job processing logic with proper error handling
+- [ ] Add database indexing for notification queries
+- [ ] Improve configuration validation
+
+### 4. Signal Recorder Service
+- [ ] Add error handling for repository operations
+- [ ] Implement input validation using DTOs
+- [ ] Add pagination support for queries
+- [ ] Enhance API documentation with Swagger
+- [ ] Add proper database indexing
+- [ ] Implement filtering capabilities
+
+### 5. Signal Analyzer Service
+- [ ] Add error handling for evaluation operations
+- [ ] Implement input validation for analysis parameters
+- [ ] Add Swagger documentation
+- [ ] Enhance query performance with proper indexing
+- [ ] Add pagination support
+- [ ] Implement proper error responses
+
+### 6. Smart Money Evaluator Service
+- [ ] Add error handling for evaluation operations
+- [ ] Implement validation for smart money calculations
+- [ ] Add proper database indexing
+- [ ] Enhance configuration validation
+- [ ] Implement proper cleanup procedures
+- [ ] Add comprehensive logging
+
+## Libs Modules
+
+### 1. Config Module
+- [x] Add validation schemas for environment variables (Added comprehensive Joi validation with descriptions)
+- [x] Extend Redis configuration options (Added TLS, retry, connection management options)
+- [x] Improve error handling for configuration loading (Added try-catch and detailed error messages)
+- [x] Add validation for database configuration (Added SSL, connection limits, retry settings)
+- [x] Implement proper configuration inheritance (Using NestJS ConfigModule properly)
+- [x] Add configuration documentation (Created detailed README.md)
+
+### 2. Interfaces Module
+- [x] Remove placeholder services (Removed interfaces.service.ts)
+- [x] Add proper type definitions (Added Network and SignalType enums)
+- [x] Include detailed field-level comments (Added JSDoc comments)
+- [x] Document module purpose and usage (Created comprehensive README.md)
+- [x] Add proper validation decorators (Added IsEnum with descriptive messages)
+- [x] Implement shared DTOs (Created type-safe DTOs with validation)
+
+### 3. Shared Module
+- [x] Improve Redis service with connection pooling (Added retry strategy and connection pooling)
+- [x] Add error recovery mechanisms (Added comprehensive error handling and logging)
+- [x] Add proper logging service (Created LoggerService with environment-aware logging)
+- [x] Improve database connection management (Added proper initialization and cleanup)
+- [x] Add cleanup procedures (Implemented OnModuleDestroy hooks)
+
+### 4. Apps Modules
+- [ ] Implement notification service
+- [ ] Add data collection service
+- [ ] Create analysis statistics service
+- [ ] Add signal recording service
+- [ ] Implement signal analyzer
+- [ ] Add smart money evaluation service
+
+## Entity Improvements
+
+### 1. Swap Entity
+- [ ] Add market field for trading pair information
+- [ ] Convert direction to enum type
+- [ ] Add validation for amount fields
+- [ ] Add timestamp index
+- [ ] Implement proper field constraints
+
+### 2. TokenBucket Entity
+- [ ] Add validation for non-negative values
+- [ ] Add index on lastUpdated
+- [ ] Add transaction count field
+- [ ] Implement proper precision handling
+- [ ] Add field constraints
+
+### 3. Signal Entity
+- [ ] Convert network and symbol to enums
+- [ ] Add proper field validation
+- [ ] Enhance indexing strategy
+- [ ] Add proper constraints
+- [ ] Implement proper date handling
+
+### 4. SignalEvaluation Entity
+- [ ] Add proper validation for numeric fields
+- [ ] Enhance indexing strategy
+- [ ] Add status tracking
+- [ ] Implement proper precision handling
+- [ ] Add proper constraints
+
+## General Improvements
+- [ ] Implement centralized logging across all services
+- [ ] Add proper error handling patterns
+- [ ] Enhance configuration validation
+- [ ] Improve database indexing strategy
+- [ ] Add proper cleanup procedures
+- [ ] Implement proper monitoring

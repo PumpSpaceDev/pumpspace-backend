@@ -1,8 +1,10 @@
 import { Module } from '@nestjs/common';
-import { InterfacesService } from './interfaces.service';
 
-@Module({
-  providers: [InterfacesService],
-  exports: [InterfacesService],
-})
+/**
+ * Interfaces Module
+ * 
+ * This module provides shared DTOs, enums, and interfaces used across the application.
+ * It does not contain any services or providers as it is purely for type definitions.
+ */
+@Module({})
 export class InterfacesModule {}
