@@ -63,6 +63,7 @@
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.1",
     "globals": "^15.14.0",
+    "ioredis": "^5.4.2",
     "joi": "^17.13.3",
     "pg": "^8.13.1",
     "redis": "^4.7.0",
