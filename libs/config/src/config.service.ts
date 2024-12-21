@@ -1,24 +1,38 @@
 import { Injectable } from '@nestjs/common';
+import { ConfigService as NestConfigService } from '@nestjs/config';
 import { TypeOrmModuleOptions } from '@nestjs/typeorm';
+import { RedisOptions } from 'ioredis';
 
 @Injectable()
 export class ConfigService {
-  public getDatabaseConfig(): TypeOrmModuleOptions {
+  constructor(private configService: NestConfigService) {}
+
+  get databaseConfig(): Partial<TypeOrmModuleOptions> {
     return {
-      type: 'postgres',
-      host: process.env.DB_HOST || 'localhost',
-      port: parseInt(process.env.DB_PORT || '5432', 10),
-      username: process.env.DB_USERNAME || 'postgres',
-      password: process.env.DB_PASSWORD || 'postgres',
-      database: process.env.DB_DATABASE || 'pumpspace',
-      logging: process.env.NODE_ENV !== 'production',
+      type: 'postgres' as const,
+      host: this.configService.get<string>('DB_HOST'),
+      port: this.configService.get<number>('DB_PORT'),
+      username: this.configService.get<string>('DB_USERNAME'),
+      password: this.configService.get<string>('DB_PASSWORD'),
+      database: this.configService.get<string>('DB_DATABASE'),
+      synchronize: this.configService.get<boolean>('DB_SYNCHRONIZE', false),
+      logging: this.configService.get<boolean>('DB_LOGGING', false),
     };
   }
 
-  public getRedisConfig(): { url: string; password?: string } {
+  get redisConfig(): RedisOptions {
     return {
-      url: process.env.REDIS_URL || 'redis://localhost:6379',
-      password: process.env.REDIS_PASSWORD,
+      host: this.configService.get<string>('REDIS_HOST'),
+      port: this.configService.get<number>('REDIS_PORT'),
+      password: this.configService.get<string>('REDIS_PASSWORD'),
+      db: this.configService.get<number>('REDIS_DB', 0),
+    };
+  }
+
+  get shyftConfig() {
+    return {
+      apiKey: this.configService.get<string>('SHYFT_API_KEY'),
+      endpoint: this.configService.get<string>('SHYFT_ENDPOINT'),
     };
   }
 }

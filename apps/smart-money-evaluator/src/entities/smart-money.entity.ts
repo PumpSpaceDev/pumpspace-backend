@@ -10,10 +10,10 @@ export class SmartMoney {
   address: string;
 
   @Column({ type: 'varchar', length: 255, nullable: true })
-  name: string;
+  name: string; // 地址昵称
 
   @Column({ type: 'varchar', length: 50 })
-  network: string;
+  network: string; // 网络类型 (如 Solana, Ethereum)
 
   @Column({ type: 'varchar', length: 255, nullable: true })
   twitterHandle: string;
