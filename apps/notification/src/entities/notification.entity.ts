@@ -47,8 +47,8 @@ export class Notification {
     example: {
       tokenAddress: '0x1234567890abcdef',
       amount: '1000000000000000000',
-      network: 'ethereum'
-    }
+      network: 'ethereum',
+    },
   })
   @Column({ type: 'jsonb' })
   @IsObject()
