@@ -16,12 +16,12 @@ export class AnalysisStatisticsService {
     private readonly tokenBucketRepository: Repository<TokenBucket>,
     private readonly configService: ConfigService,
   ) {
-    this.redis = new Redis(this.configService.getRedisConfig());
+    this.redis = new Redis(this.configService.redisConfig);
     this.subscribeToTransactions();
   }
 
   private async subscribeToTransactions() {
-    const subscriber = new Redis(this.configService.getRedisConfig());
+    const subscriber = new Redis(this.configService.redisConfig);
 
     subscriber.subscribe('raydium:transactions', (err) => {
       if (err) {

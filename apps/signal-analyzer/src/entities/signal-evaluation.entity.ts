@@ -6,11 +6,26 @@ export class SignalEvaluation {
   @PrimaryGeneratedColumn()
   id: number;
 
+  @Column()
+  signalId: number;
+
   @Column({ type: 'varchar', length: 100 })
   signalUniqueCode: string;
 
   @Column({ type: 'timestamp' })
   evaluationTime: Date;
+
+  @Column({ type: 'decimal', precision: 20, scale: 10, nullable: false })
+  entryPrice: number;
+
+  @Column({ type: 'decimal', precision: 20, scale: 10, nullable: true })
+  exitPrice: number;
+
+  @Column({ type: 'decimal', precision: 20, scale: 10, nullable: true })
+  profitLoss: number;
+
+  @Column({ type: 'decimal', precision: 20, scale: 10, nullable: true })
+  roi: number;
 
   @Column({ type: 'decimal', precision: 20, scale: 10, nullable: false })
   priceChange: number;
@@ -29,4 +44,7 @@ export class SignalEvaluation {
 
   @Column({ type: 'decimal', precision: 20, scale: 10, nullable: false })
   compositeScore: number;
+
+  @Column({ type: 'varchar', length: 20, default: 'pending' })
+  status: 'pending' | 'completed' | 'failed';
 }

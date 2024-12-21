@@ -6,7 +6,10 @@ export class LoggerService implements NestLoggerService {
   constructor(private configService: ConfigService) {}
 
   error(message: string, trace?: string, context?: string) {
-    console.error(`[Error][${context || 'Application'}] ${message}`, trace || '');
+    console.error(
+      `[Error][${context || 'Application'}] ${message}`,
+      trace || '',
+    );
   }
 
   warn(message: string, context?: string) {

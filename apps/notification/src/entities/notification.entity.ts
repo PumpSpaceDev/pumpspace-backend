@@ -6,7 +6,18 @@ import {
   UpdateDateColumn,
   Index,
 } from 'typeorm';
-import { IsString, IsEnum, IsObject, IsBoolean, IsNumber, Length, Matches, ValidateNested, Min, Max } from 'class-validator';
+import {
+  IsString,
+  IsEnum,
+  IsObject,
+  IsBoolean,
+  IsNumber,
+  Length,
+  Matches,
+  ValidateNested,
+  Min,
+  Max,
+} from 'class-validator';
 
 @Entity('notifications')
 @Index(['walletAddress', 'processed'])

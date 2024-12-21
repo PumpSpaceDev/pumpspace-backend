@@ -6,7 +6,7 @@ export enum Network {
    * Solana blockchain network
    */
   SOLANA = 'solana',
-  
+
   /**
    * Ethereum blockchain network
    */

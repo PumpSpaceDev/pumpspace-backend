@@ -27,7 +27,9 @@ export class ConfigService {
         autoLoadEntities: true,
       };
     } catch (error) {
-      throw new Error(`Failed to load database configuration: ${error.message}`);
+      throw new Error(
+        `Failed to load database configuration: ${error.message}`,
+      );
     }
   }
 
@@ -39,10 +41,19 @@ export class ConfigService {
         password: this.configService.get<string>('REDIS_PASSWORD'),
         db: this.configService.get<number>('REDIS_DB', 0),
         tls: this.configService.get<boolean>('REDIS_TLS') ? {} : undefined,
-        keyPrefix: this.configService.get<string>('REDIS_KEY_PREFIX', 'pumpspace:'),
+        keyPrefix: this.configService.get<string>(
+          'REDIS_KEY_PREFIX',
+          'pumpspace:',
+        ),
         retryStrategy: (times: number) => {
-          const delay = this.configService.get<number>('REDIS_RETRY_DELAY', 3000);
-          const maxAttempts = this.configService.get<number>('REDIS_RETRY_ATTEMPTS', 10);
+          const delay = this.configService.get<number>(
+            'REDIS_RETRY_DELAY',
+            3000,
+          );
+          const maxAttempts = this.configService.get<number>(
+            'REDIS_RETRY_ATTEMPTS',
+            10,
+          );
           if (times > maxAttempts) {
             return null; // Stop retrying
           }

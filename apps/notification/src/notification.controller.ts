@@ -38,11 +38,11 @@ export class NotificationController {
     description: 'Internal server error',
   })
   @Get(':walletAddress')
-  async getNotifications(
-    @Param(ValidationPipe) params: WalletAddressDto,
-  ) {
+  async getNotifications(@Param(ValidationPipe) params: WalletAddressDto) {
     try {
-      return await this.notificationService.getNotifications(params.walletAddress);
+      return await this.notificationService.getNotifications(
+        params.walletAddress,
+      );
     } catch (error) {
       this.logger.error(
         `Error fetching notifications for wallet ${params.walletAddress}`,
