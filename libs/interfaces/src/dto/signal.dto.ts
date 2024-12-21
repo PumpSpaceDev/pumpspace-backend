@@ -5,7 +5,10 @@ import {
   IsDate,
   IsOptional,
   IsNotEmpty,
+  IsEnum,
 } from 'class-validator';
+import { Network } from '../enums/network.enum';
+import { SignalType } from '../enums/signal-type.enum';
 
 export class SignalDto {
   @IsNotEmpty()
@@ -21,12 +24,12 @@ export class SignalDto {
   symbol?: string;
 
   @IsNotEmpty()
-  @IsString()
-  signal: string;
+  @IsEnum(SignalType, { message: 'Signal must be a valid signal type' })
+  signal: SignalType;
 
   @IsNotEmpty()
-  @IsString()
-  network: string;
+  @IsEnum(Network, { message: 'Network must be a valid blockchain network' })
+  network: Network;
 
   @IsNotEmpty()
   @IsDate()

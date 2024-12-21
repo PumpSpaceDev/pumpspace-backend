@@ -5,7 +5,9 @@ import {
   IsOptional,
   IsDate,
   IsNotEmpty,
+  IsEnum,
 } from 'class-validator';
+import { Network } from '../enums/network.enum';
 
 export class SmartMoneyDto {
   @IsNotEmpty()
@@ -17,8 +19,8 @@ export class SmartMoneyDto {
   name?: string;
 
   @IsNotEmpty()
-  @IsString()
-  network: string;
+  @IsEnum(Network, { message: 'Network must be a valid blockchain network' })
+  network: Network;
 
   @IsOptional()
   @IsString()

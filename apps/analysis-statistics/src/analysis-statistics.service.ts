@@ -16,19 +16,25 @@ export class AnalysisStatisticsService {
     private readonly tokenBucketRepository: Repository<TokenBucket>,
     private readonly configService: ConfigService,
   ) {
-    this.redis = new Redis(this.configService.getRedisConfig());
+    this.redis = new Redis(this.configService.redisConfig);
     this.subscribeToTransactions();
   }
 
   private async subscribeToTransactions() {
-    const subscriber = new Redis(this.configService.getRedisConfig());
+    const subscriber = new Redis(this.configService.redisConfig);
 
     subscriber.subscribe('raydium:transactions', (err) => {
       if (err) {
         this.logger.error('Failed to subscribe to Raydium transactions:', err);
+        setTimeout(() => this.subscribeToTransactions(), 5000); // Retry after 5 seconds
         return;
       }
       this.logger.log('Subscribed to Raydium transactions');
+    });
+
+    subscriber.on('error', (error) => {
+      this.logger.error('Redis subscription error:', error);
+      setTimeout(() => this.subscribeToTransactions(), 5000); // Retry after 5 seconds
     });
 
     subscriber.on('message', async (channel, message) => {
@@ -39,17 +45,75 @@ export class AnalysisStatisticsService {
         this.logger.error('Error processing transaction:', error);
       }
     });
+
+    process.on('beforeExit', () => {
+      subscriber.disconnect();
+      this.redis.disconnect();
+    });
   }
 
   private async processTransaction(transaction: any) {
-    await this.updateTokenStatistics(
-      transaction.amm,
-      transaction.amountIn,
-      transaction.amountOut,
-    );
+    try {
+      if (
+        !transaction?.amm ||
+        !transaction?.amountIn ||
+        !transaction?.amountOut
+      ) {
+        this.logger.warn('Invalid transaction data received:', transaction);
+        return;
+      }
 
-    if (await this.isSmartMoneyAddress(transaction.signer)) {
-      await this.publishSmartMoneyMatch(transaction);
+      await this.updateTokenStatistics(
+        transaction.amm,
+        transaction.amountIn,
+        transaction.amountOut,
+      );
+
+      if (
+        transaction.signer &&
+        (await this.isSmartMoneyAddress(transaction.signer))
+      ) {
+        await this.publishSmartMoneyMatch(transaction);
+      }
+    } catch (error) {
+      this.logger.error('Error processing transaction:', error);
+    }
+  }
+
+  async getTokenStats(query: { tokenId: string; window: string }) {
+    try {
+      if (!this.bucketWindows.includes(query.window)) {
+        throw new Error(`Invalid window: ${query.window}`);
+      }
+
+      const bucketKey = `${query.tokenId}:${query.window}`;
+
+      const bucket = await this.tokenBucketRepository.findOne({
+        where: { tokenId: query.tokenId, bucketKey },
+      });
+
+      if (!bucket) {
+        return {
+          tokenId: query.tokenId,
+          window: query.window,
+          volume: 0,
+          price: 0,
+          transactionCount: 0,
+          lastUpdated: new Date(),
+        };
+      }
+
+      return {
+        tokenId: bucket.tokenId,
+        window: query.window,
+        volume: Number(bucket.bucketVolume),
+        price: Number(bucket.bucketPrice),
+        transactionCount: Number(bucket.transactionCount),
+        lastUpdated: bucket.lastUpdated,
+      };
+    } catch (error) {
+      this.logger.error('Error fetching token statistics:', error);
+      throw error;
     }
   }
 

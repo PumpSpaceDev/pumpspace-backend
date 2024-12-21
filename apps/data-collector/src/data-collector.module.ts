@@ -1,13 +1,18 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule } from '@app/config';
-import { SharedModule } from '@app/shared';
+import { SharedModule, RedisModule } from '@app/shared';
 import { DataCollectorController } from './data-collector.controller';
 import { DataCollectorService } from './data-collector.service';
 import { Swap } from './entities/swap.entity';
 
 @Module({
-  imports: [ConfigModule, SharedModule, TypeOrmModule.forFeature([Swap])],
+  imports: [
+    ConfigModule,
+    SharedModule,
+    RedisModule,
+    TypeOrmModule.forFeature([Swap]),
+  ],
   controllers: [DataCollectorController],
   providers: [DataCollectorService],
 })

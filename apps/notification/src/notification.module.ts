@@ -12,7 +12,7 @@ import { Notification } from './entities/notification.entity';
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => ({
-        ...configService.getDatabaseConfig(),
+        ...configService.databaseConfig,
         entities: [Notification],
         synchronize: process.env.NODE_ENV !== 'production',
       }),
@@ -22,12 +22,27 @@ import { Notification } from './entities/notification.entity';
     BullModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => ({
-        redis: configService.getRedisConfig(),
+        redis: configService.redisConfig,
+        defaultJobOptions: {
+          attempts: configService.notificationConfig.queueAttempts,
+          backoff: {
+            type: 'exponential',
+            delay: configService.notificationConfig.queueBackoff,
+          },
+        },
       }),
       inject: [ConfigService],
     }),
-    BullModule.registerQueue({
-      name: 'notifications',
+    BullModule.registerQueueAsync({
+      imports: [ConfigModule],
+      useFactory: (configService: ConfigService) => ({
+        name: configService.notificationConfig.queueName,
+        defaultJobOptions: {
+          removeOnComplete: true,
+          removeOnFail: false,
+        },
+      }),
+      inject: [ConfigService],
     }),
   ],
   controllers: [NotificationController],
