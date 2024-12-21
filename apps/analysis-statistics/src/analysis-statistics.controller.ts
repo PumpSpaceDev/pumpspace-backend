@@ -1,14 +1,13 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Logger } from '@nestjs/common';
 import { AnalysisStatisticsService } from './analysis-statistics.service';
 
-@Controller()
+@Controller('analysis')
 export class AnalysisStatisticsController {
+  private readonly logger = new Logger(AnalysisStatisticsController.name);
+
   constructor(
     private readonly analysisStatisticsService: AnalysisStatisticsService,
   ) {}
 
-  @Get()
-  getHello(): string {
-    return this.analysisStatisticsService.getHello();
-  }
+  // Controller endpoints will be added as needed for retrieving statistics
 }
