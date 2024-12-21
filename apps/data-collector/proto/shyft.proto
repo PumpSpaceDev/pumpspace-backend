@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+package shyft;
+
+service TransactionService {
+  rpc GetTransactions(TransactionRequest) returns (stream Transaction);
+}
+
+message TransactionRequest {
+  string network = 1;
+  string address = 2;
+}
+
+message Transaction {
+  string signature = 1;
+  string signer = 2;
+  int64 timestamp = 3;
+  repeated string accounts = 4;
+  Amount amountIn = 5;
+  Amount amountOut = 6;
+}
+
+message Amount {
+  string value = 1;
+  string decimals = 2;
+}
