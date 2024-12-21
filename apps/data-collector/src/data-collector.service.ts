@@ -47,7 +47,8 @@ export class DataCollectorService implements OnModuleInit {
     try {
       const stream = this.shyftService.getTransactions({});
       stream.subscribe({
-        next: (transaction: Transaction) => this.processTransaction(transaction),
+        next: (transaction: Transaction) =>
+          this.processTransaction(transaction),
         error: (error) => this.logger.error('Stream error:', error),
       });
     } catch (error) {
