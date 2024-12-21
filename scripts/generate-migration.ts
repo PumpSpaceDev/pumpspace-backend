@@ -10,40 +10,30 @@ import { TokenBucket } from '../apps/analysis-statistics/src/entities/token-buck
 
 config();
 
-async function generateMigration() {
-  const dataSource = new DataSource({
-    type: 'postgres',
-    host: process.env.DB_HOST,
-    port: parseInt(process.env.DB_PORT || '5432'),
-    username: process.env.DB_USERNAME,
-    password: process.env.DB_PASSWORD,
-    database: process.env.DB_DATABASE,
-    entities: [
-      Swap,
-      SmartMoney,
-      Score,
-      Signal,
-      SignalEvaluation,
-      TokenBucket
-    ],
-    migrations: [join(__dirname, '../src/database/migrations/*.{ts,js}')],
-    synchronize: false,
-    logging: process.env.DB_LOGGING === 'true',
-  });
+const dataSource = new DataSource({
+  type: 'postgres',
+  host: process.env.DB_HOST || 'localhost',
+  port: parseInt(process.env.DB_PORT || '5432'),
+  username: process.env.DB_USERNAME || 'postgres',
+  password: process.env.DB_PASSWORD || 'postgres',
+  database: process.env.DB_DATABASE || 'pumpspace',
+  entities: [Swap, SmartMoney, Score, Signal, SignalEvaluation, TokenBucket],
+  migrations: [join(__dirname, '../src/database/migrations/*.{ts,js}')],
+  migrationsTableName: 'typeorm_migrations',
+  synchronize: false,
+  logging: process.env.DB_LOGGING === 'true',
+});
 
+async function generateMigration() {
   try {
     await dataSource.initialize();
-    console.log('Data Source initialized');
-
-    const sqlInMemory = await dataSource.driver.createSchemaBuilder().log();
-    console.log('Schema changes:', sqlInMemory);
-
+    await dataSource.runMigrations();
     await dataSource.destroy();
-    console.log('Data Source destroyed');
+    console.log('Migration generated successfully');
   } catch (error) {
-    console.error('Error during migration generation:', error);
+    console.error('Error generating migration:', error);
     process.exit(1);
   }
 }
 
-generateMigration().catch(console.error);
+generateMigration();
