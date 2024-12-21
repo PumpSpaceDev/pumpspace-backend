@@ -52,7 +52,8 @@ export class NotificationService {
     notification.channel = 'smart-money';
 
     // Save notification to database
-    const savedNotification = await this.notificationRepository.save(notification);
+    const savedNotification =
+      await this.notificationRepository.save(notification);
 
     // Add to processing queue
     await this.notificationQueue.add('process', {

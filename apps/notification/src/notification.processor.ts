@@ -19,23 +19,33 @@ export class NotificationProcessor {
     const { notificationId, type, data } = job.data;
 
     try {
-      this.logger.log(`Processing notification ${notificationId} of type ${type}`);
+      this.logger.log(
+        `Processing notification ${notificationId} of type ${type}`,
+      );
 
       // Here you would implement the actual notification delivery logic
       // For example, sending to a webhook, email, or push notification service
       await this.processNotificationByType(type, data);
 
       // Mark as processed
-      await this.notificationRepository.update(notificationId, { processed: true });
+      await this.notificationRepository.update(notificationId, {
+        processed: true,
+      });
 
       this.logger.log(`Successfully processed notification ${notificationId}`);
     } catch (error) {
-      this.logger.error(`Failed to process notification ${notificationId}:`, error);
+      this.logger.error(
+        `Failed to process notification ${notificationId}:`,
+        error,
+      );
       throw error;
     }
   }
 
-  private async processNotificationByType(type: string, data: any): Promise<void> {
+  private async processNotificationByType(
+    type: string,
+    data: any,
+  ): Promise<void> {
     switch (type) {
       case 'SMART_MONEY_MATCH':
         await this.processSmartMoneyMatch(data);
