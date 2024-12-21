@@ -24,7 +24,10 @@ export class SignalRecorderService {
     return this.signalRepository.findOne({ where: { uniqueCode } });
   }
 
-  async update(uniqueCode: string, updateSignalDto: UpdateSignalDto): Promise<Signal> {
+  async update(
+    uniqueCode: string,
+    updateSignalDto: UpdateSignalDto,
+  ): Promise<Signal> {
     await this.signalRepository.update({ uniqueCode }, updateSignalDto);
     return this.findOne(uniqueCode);
   }

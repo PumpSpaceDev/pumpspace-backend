@@ -8,7 +8,9 @@ export class SignalRecorderController {
   constructor(private readonly signalRecorderService: SignalRecorderService) {}
 
   @Post()
-  async createSignal(@Body() createSignalDto: CreateSignalDto): Promise<Signal> {
+  async createSignal(
+    @Body() createSignalDto: CreateSignalDto,
+  ): Promise<Signal> {
     return this.signalRecorderService.createSignal(createSignalDto);
   }
 
