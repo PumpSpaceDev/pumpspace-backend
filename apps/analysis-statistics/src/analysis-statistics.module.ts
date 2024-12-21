@@ -7,7 +7,11 @@ import { AnalysisStatisticsService } from './analysis-statistics.service';
 import { TokenBucket } from './entities/token-bucket.entity';
 
 @Module({
-  imports: [ConfigModule, SharedModule, TypeOrmModule.forFeature([TokenBucket])],
+  imports: [
+    ConfigModule,
+    SharedModule,
+    TypeOrmModule.forFeature([TokenBucket]),
+  ],
   controllers: [AnalysisStatisticsController],
   providers: [AnalysisStatisticsService],
 })

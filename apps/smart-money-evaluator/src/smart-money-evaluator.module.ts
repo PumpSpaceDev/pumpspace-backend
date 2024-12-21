@@ -8,7 +8,11 @@ import { SmartMoney } from './entities/smart-money.entity';
 import { Score } from './entities/score.entity';
 
 @Module({
-  imports: [ConfigModule, SharedModule, TypeOrmModule.forFeature([SmartMoney, Score])],
+  imports: [
+    ConfigModule,
+    SharedModule,
+    TypeOrmModule.forFeature([SmartMoney, Score]),
+  ],
   controllers: [SmartMoneyEvaluatorController],
   providers: [SmartMoneyEvaluatorService],
 })

@@ -7,7 +7,11 @@ import { SignalAnalyzerService } from './signal-analyzer.service';
 import { SignalEvaluation } from './entities/signal-evaluation.entity';
 
 @Module({
-  imports: [ConfigModule, SharedModule, TypeOrmModule.forFeature([SignalEvaluation])],
+  imports: [
+    ConfigModule,
+    SharedModule,
+    TypeOrmModule.forFeature([SignalEvaluation]),
+  ],
   controllers: [SignalAnalyzerController],
   providers: [SignalAnalyzerService],
 })
