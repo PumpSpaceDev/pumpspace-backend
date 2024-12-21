@@ -1,4 +1,11 @@
-import { IsString, IsNumber, IsBoolean, IsDate, IsOptional, IsNotEmpty } from 'class-validator';
+import {
+  IsString,
+  IsNumber,
+  IsBoolean,
+  IsDate,
+  IsOptional,
+  IsNotEmpty,
+} from 'class-validator';
 
 export class SignalDto {
   @IsNotEmpty()

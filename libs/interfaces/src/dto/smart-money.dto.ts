@@ -1,4 +1,11 @@
-import { IsString, IsNumber, IsBoolean, IsOptional, IsDate, IsNotEmpty } from 'class-validator';
+import {
+  IsString,
+  IsNumber,
+  IsBoolean,
+  IsOptional,
+  IsDate,
+  IsNotEmpty,
+} from 'class-validator';
 
 export class SmartMoneyDto {
   @IsNotEmpty()
