@@ -1,12 +1,16 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, Param, Logger } from '@nestjs/common';
 import { NotificationService } from './notification.service';
 
-@Controller()
+@Controller('notifications')
 export class NotificationController {
-  constructor(private readonly notificationService: NotificationService) {}
+  private readonly logger = new Logger(NotificationController.name);
 
-  @Get()
-  getHello(): string {
-    return this.notificationService.getHello();
+  constructor(
+    private readonly notificationService: NotificationService,
+  ) {}
+
+  @Get(':walletAddress')
+  async getNotifications(@Param('walletAddress') walletAddress: string) {
+    return this.notificationService.getNotifications(walletAddress);
   }
 }

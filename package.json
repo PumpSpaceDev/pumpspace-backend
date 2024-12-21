@@ -51,6 +51,7 @@
     "prepare": "pnpm dlx husky install"
   },
   "dependencies": {
+    "@nestjs/bull": "^10.2.3",
     "@nestjs/cache-manager": "^2.3.0",
     "@nestjs/common": "^10.0.0",
     "@nestjs/config": "^3.3.0",
@@ -58,6 +59,7 @@
     "@nestjs/microservices": "^10.4.15",
     "@nestjs/platform-express": "^10.0.0",
     "@nestjs/typeorm": "^10.0.2",
+    "bull": "^4.16.5",
     "cache-manager": "^5.2.3",
     "cache-manager-redis-store": "^3.0.1",
     "class-transformer": "^0.5.1",
