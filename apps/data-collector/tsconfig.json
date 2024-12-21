@@ -1,0 +1,19 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "declaration": true,
+    "outDir": "./dist",
+    "baseUrl": "./",
+    "paths": {
+      "@app/shared": ["../../libs/shared/src"],
+      "@app/config": ["../../libs/config/src"],
+      "@app/shared-swaps": ["../../libs/shared-swaps/src"],
+      "@app/shared-swaps/*": ["../../libs/shared-swaps/src/*"]
+    },
+    "types": ["node"],
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist", "test", "**/*spec.ts"]
+}

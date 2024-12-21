@@ -35,6 +35,12 @@
       ],
       "@app/config/*": [
         "libs/config/src/*"
+      ],
+      "@app/shared-swaps": [
+        "libs/shared-swaps/src"
+      ],
+      "@app/shared-swaps/*": [
+        "libs/shared-swaps/src/*"
       ]
     }
   }
