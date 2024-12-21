@@ -1,39 +1,32 @@
 import { Entity, PrimaryGeneratedColumn, Column, Index } from 'typeorm';
 
 @Entity('signal_evaluation')
-@Index(['signalId'], { unique: true })
+@Index(['signalUniqueCode', 'evaluationTime'], { unique: true })
 export class SignalEvaluation {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ type: 'int' })
-  signalId: number;
+  @Column({ type: 'varchar', length: 100 })
+  signalUniqueCode: string;
 
-  @Column({ type: 'decimal', precision: 20, scale: 10 })
-  entryPrice: number;
-
-  @Column({ type: 'decimal', precision: 20, scale: 10, nullable: true })
-  exitPrice: number;
-
-  @Column({ type: 'decimal', precision: 10, scale: 2 })
-  profitLoss: number;
-
-  @Column({ type: 'decimal', precision: 10, scale: 2 })
-  roi: number;
-
-  @Column({ type: 'int' })
-  holdingPeriod: number;
-
-  @Column({
-    type: 'timestamp',
-    nullable: false,
-    default: () => 'CURRENT_TIMESTAMP',
-  })
+  @Column({ type: 'timestamp' })
   evaluationTime: Date;
 
-  @Column({ type: 'varchar', length: 20 })
-  status: string;
+  @Column({ type: 'decimal', precision: 20, scale: 10, nullable: false })
+  priceChange: number;
 
-  @Column({ type: 'jsonb', nullable: true })
-  metadata: Record<string, any>;
+  @Column({ type: 'decimal', precision: 20, scale: 10, nullable: false })
+  reserveChange: number;
+
+  @Column({ type: 'decimal', precision: 20, scale: 10, nullable: false })
+  marketCap: number;
+
+  @Column({ type: 'decimal', precision: 20, scale: 10, nullable: false })
+  priceWeight: number;
+
+  @Column({ type: 'decimal', precision: 20, scale: 10, nullable: false })
+  reserveWeight: number;
+
+  @Column({ type: 'decimal', precision: 20, scale: 10, nullable: false })
+  compositeScore: number;
 }
