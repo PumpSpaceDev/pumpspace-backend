@@ -6,3 +6,5 @@ export * from './signal-evaluation.dto';
 export * from './token-bucket.dto';
 export * from './create-signal.dto';
 export * from './update-signal.dto';
+export * from './create-signal-evaluation.dto';
+export * from './update-signal-evaluation.dto';
