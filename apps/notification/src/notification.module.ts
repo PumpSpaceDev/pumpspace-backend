@@ -23,11 +23,26 @@ import { Notification } from './entities/notification.entity';
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => ({
         redis: configService.redisConfig,
+        defaultJobOptions: {
+          attempts: configService.notificationConfig.queueAttempts,
+          backoff: {
+            type: 'exponential',
+            delay: configService.notificationConfig.queueBackoff,
+          },
+        },
       }),
       inject: [ConfigService],
     }),
-    BullModule.registerQueue({
-      name: 'notifications',
+    BullModule.registerQueueAsync({
+      imports: [ConfigModule],
+      useFactory: (configService: ConfigService) => ({
+        name: configService.notificationConfig.queueName,
+        defaultJobOptions: {
+          removeOnComplete: true,
+          removeOnFail: false,
+        },
+      }),
+      inject: [ConfigService],
     }),
   ],
   controllers: [NotificationController],

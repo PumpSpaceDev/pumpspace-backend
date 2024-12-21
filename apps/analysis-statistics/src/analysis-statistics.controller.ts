@@ -1,5 +1,14 @@
-import { Controller, Logger } from '@nestjs/common';
+import {
+  Controller,
+  Logger,
+  Get,
+  Query,
+  HttpStatus,
+  HttpException,
+  ValidationPipe,
+} from '@nestjs/common';
 import { AnalysisStatisticsService } from './analysis-statistics.service';
+import { TokenStatisticsDto } from './dto/token-statistics.dto';
 
 @Controller('analysis')
 export class AnalysisStatisticsController {
@@ -9,5 +18,24 @@ export class AnalysisStatisticsController {
     private readonly analysisStatisticsService: AnalysisStatisticsService,
   ) {}
 
-  // Controller endpoints will be added as needed for retrieving statistics
+  @Get('token-stats')
+  async getTokenStats(
+    @Query(new ValidationPipe({ transform: true })) query: TokenStatisticsDto,
+  ) {
+    try {
+      const stats = await this.analysisStatisticsService.getTokenStats(query);
+      return stats;
+    } catch (error) {
+      this.logger.error('Error fetching token statistics:', error);
+      throw new HttpException(
+        error.message || 'Failed to fetch token statistics',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  @Get('token-stats/windows')
+  getAvailableWindows() {
+    return ['5m', '1h', '24h'];
+  }
 }

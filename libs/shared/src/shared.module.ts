@@ -4,6 +4,7 @@ import { ConfigModule, ConfigService } from '@app/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { RedisModule } from './redis';
 import { TokenStatsModule } from './token-stats';
+import { MetricsModule } from './metrics/metrics.module';
 
 @Module({
   imports: [
@@ -18,8 +19,15 @@ import { TokenStatsModule } from './token-stats';
     }),
     RedisModule,
     TokenStatsModule,
+    MetricsModule,
   ],
   providers: [SharedService],
-  exports: [SharedService, TypeOrmModule, RedisModule, TokenStatsModule],
+  exports: [
+    SharedService,
+    TypeOrmModule,
+    RedisModule,
+    TokenStatsModule,
+    MetricsModule,
+  ],
 })
 export class SharedModule {}

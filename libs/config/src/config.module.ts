@@ -8,6 +8,14 @@ import * as Joi from 'joi';
     NestConfigModule.forRoot({
       isGlobal: true,
       validationSchema: Joi.object({
+        // Metrics Configuration
+        METRICS_ENABLED: Joi.boolean()
+          .default(true)
+          .description('Enable/disable Prometheus metrics'),
+        METRICS_PATH: Joi.string()
+          .default('/metrics')
+          .description('Path for Prometheus metrics endpoint'),
+
         // Database Configuration
         DB_HOST: Joi.string().required().description('Database host address'),
         DB_PORT: Joi.number().default(5432).description('Database port'),
@@ -59,6 +67,38 @@ import * as Joi from 'joi';
         SHYFT_TIMEOUT: Joi.number()
           .default(30000)
           .description('Shyft API timeout in ms'),
+
+        // Smart Money Evaluator Configuration
+        SMART_MONEY_PORT: Joi.number()
+          .default(3000)
+          .description('Smart Money Evaluator service port'),
+        SMART_MONEY_CLEANUP_INTERVAL: Joi.number()
+          .default(3600000)
+          .description('Interval for cleaning up old scores (ms)'),
+        SMART_MONEY_SCORE_RETENTION_DAYS: Joi.number()
+          .default(30)
+          .description('Number of days to retain score history'),
+
+        // Notification Service Configuration
+        NOTIFICATION_QUEUE_NAME: Joi.string()
+          .required()
+          .default('notifications')
+          .description('Name of the notification queue'),
+        NOTIFICATION_QUEUE_ATTEMPTS: Joi.number()
+          .min(1)
+          .max(10)
+          .default(3)
+          .description('Number of retry attempts for notification queue'),
+        NOTIFICATION_QUEUE_BACKOFF: Joi.number()
+          .min(1000)
+          .max(60000)
+          .default(5000)
+          .description('Backoff delay for notification queue retries (ms)'),
+        NOTIFICATION_BATCH_SIZE: Joi.number()
+          .min(1)
+          .max(100)
+          .default(50)
+          .description('Batch size for processing notifications'),
       }),
     }),
   ],

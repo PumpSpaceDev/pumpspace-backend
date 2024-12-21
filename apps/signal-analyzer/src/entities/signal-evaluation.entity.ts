@@ -1,4 +1,5 @@
 import { Entity, PrimaryGeneratedColumn, Column, Index } from 'typeorm';
+import { EvaluationStatus } from '../dto/update-evaluation.dto';
 
 @Entity('signal_evaluation')
 @Index(['signalUniqueCode', 'evaluationTime'], { unique: true })
@@ -6,12 +7,15 @@ export class SignalEvaluation {
   @PrimaryGeneratedColumn()
   id: number;
 
+  @Index()
   @Column()
   signalId: number;
 
+  @Index()
   @Column({ type: 'varchar', length: 100 })
   signalUniqueCode: string;
 
+  @Index()
   @Column({ type: 'timestamp' })
   evaluationTime: Date;
 
@@ -45,6 +49,11 @@ export class SignalEvaluation {
   @Column({ type: 'decimal', precision: 20, scale: 10, nullable: false })
   compositeScore: number;
 
-  @Column({ type: 'varchar', length: 20, default: 'pending' })
-  status: 'pending' | 'completed' | 'failed';
+  @Index()
+  @Column({
+    type: 'enum',
+    enum: EvaluationStatus,
+    default: EvaluationStatus.PENDING,
+  })
+  status: EvaluationStatus;
 }

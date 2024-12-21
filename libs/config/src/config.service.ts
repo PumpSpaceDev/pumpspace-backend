@@ -88,4 +88,101 @@ export class ConfigService {
       endpoint: this.configService.get<string>('SHYFT_ENDPOINT'),
     };
   }
+
+  get notificationConfig() {
+    try {
+      const config = {
+        queueName: this.configService.get<string>(
+          'NOTIFICATION_QUEUE_NAME',
+          'notifications',
+        ),
+        queueConcurrency: this.configService.get<number>(
+          'NOTIFICATION_QUEUE_CONCURRENCY',
+          3,
+        ),
+        queueAttempts: this.configService.get<number>(
+          'NOTIFICATION_QUEUE_ATTEMPTS',
+          3,
+        ),
+        queueBackoff: this.configService.get<number>(
+          'NOTIFICATION_QUEUE_BACKOFF',
+          5000,
+        ),
+        batchSize: this.configService.get<number>(
+          'NOTIFICATION_BATCH_SIZE',
+          50,
+        ),
+      };
+
+      // Validate configuration values
+      if (config.queueConcurrency < 1 || config.queueConcurrency > 10) {
+        throw new Error(
+          'NOTIFICATION_QUEUE_CONCURRENCY must be between 1 and 10',
+        );
+      }
+      if (config.queueAttempts < 1 || config.queueAttempts > 10) {
+        throw new Error('NOTIFICATION_QUEUE_ATTEMPTS must be between 1 and 10');
+      }
+      if (config.queueBackoff < 1000 || config.queueBackoff > 60000) {
+        throw new Error(
+          'NOTIFICATION_QUEUE_BACKOFF must be between 1000ms and 60000ms',
+        );
+      }
+      if (config.batchSize < 1 || config.batchSize > 100) {
+        throw new Error('NOTIFICATION_BATCH_SIZE must be between 1 and 100');
+      }
+      if (!config.queueName || config.queueName.trim().length === 0) {
+        throw new Error(
+          'NOTIFICATION_QUEUE_NAME is required and cannot be empty',
+        );
+      }
+
+      return config;
+    } catch (error) {
+      throw new Error(
+        `Failed to load notification configuration: ${error.message}`,
+      );
+    }
+  }
+
+  get smartMoneyConfig() {
+    return {
+      port: this.configService.get<number>('SMART_MONEY_PORT', 3000),
+      cleanupInterval: this.configService.get<number>(
+        'SMART_MONEY_CLEANUP_INTERVAL',
+        3600000,
+      ),
+      scoreRetentionDays: this.configService.get<number>(
+        'SMART_MONEY_SCORE_RETENTION_DAYS',
+        30,
+      ),
+    };
+  }
+
+  get metricsConfig() {
+    return {
+      enabled: this.configService.get<boolean>('METRICS_ENABLED', true),
+      path: this.configService.get<string>('METRICS_PATH', '/metrics'),
+    };
+  }
+
+  get serviceConfig() {
+    return {
+      notification: {
+        port: this.configService.get<number>('NOTIFICATION_PORT', 3000),
+      },
+      dataCollector: {
+        port: this.configService.get<number>('DATA_COLLECTOR_PORT', 3001),
+      },
+      analysisStatistics: {
+        port: this.configService.get<number>('ANALYSIS_STATISTICS_PORT', 3002),
+      },
+      signalRecorder: {
+        port: this.configService.get<number>('SIGNAL_RECORDER_PORT', 3003),
+      },
+      signalAnalyzer: {
+        port: this.configService.get<number>('SIGNAL_ANALYZER_PORT', 3004),
+      },
+    };
+  }
 }

@@ -4,7 +4,9 @@ import {
   Column,
   Index,
   CreateDateColumn,
+  Check,
 } from 'typeorm';
+import { SwapDirection } from '../enums';
 
 @Entity('swaps')
 @Index(['signer'])
@@ -26,12 +28,22 @@ export class Swap {
   @Column({ type: 'char', length: 44 })
   amm: string; // 交易的 AMM 地址
 
-  @Column({ type: 'int' })
-  direction: number; // 交易方向 (0: buy, 1: sell)
+  @Column({
+    type: 'enum',
+    enum: SwapDirection,
+    enumName: 'swap_direction_enum',
+  })
+  direction: SwapDirection; // Transaction direction (BUY/SELL)
 
-  @Column({ type: 'bigint' })
-  amountIn: bigint; // 输入的交易量
+  @Column({ type: 'numeric', precision: 78, scale: 0 })
+  @Check('amount_in >= 0')
+  amountIn: bigint; // Input amount
 
-  @Column({ type: 'bigint' })
-  amountOut: bigint; // 输出的交易量
+  @Column({ type: 'numeric', precision: 78, scale: 0 })
+  @Check('amount_out >= 0')
+  amountOut: bigint; // Output amount
+
+  @Column({ type: 'varchar', length: 100 })
+  @Index()
+  market: string; // Trading pair information (e.g., "SOL/USDC")
 }

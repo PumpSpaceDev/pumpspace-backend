@@ -19,8 +19,19 @@ export class NotificationService {
     private readonly notificationQueue: Queue,
     private readonly configService: ConfigService,
   ) {
-    this.redis = new Redis(this.configService.redisConfig);
-    this.subscribeToSmartMoneyMatches();
+    try {
+      this.redis = new Redis(this.configService.redisConfig);
+      this.redis.on('error', (err) => {
+        this.logger.error('Redis connection error:', err);
+      });
+      this.redis.on('connect', () => {
+        this.logger.log('Connected to Redis');
+      });
+      this.subscribeToSmartMoneyMatches();
+    } catch (error) {
+      this.logger.error('Failed to initialize Redis connection:', error);
+      throw error;
+    }
   }
 
   private async subscribeToSmartMoneyMatches() {
@@ -64,14 +75,43 @@ export class NotificationService {
   }
 
   async getNotifications(walletAddress: string): Promise<Notification[]> {
-    return this.notificationRepository.find({
-      where: { walletAddress },
-      order: { createdAt: 'DESC' },
-      take: 50,
-    });
+    try {
+      const notifications = await this.notificationRepository.find({
+        where: { walletAddress },
+        order: { createdAt: 'DESC' },
+        take: 50,
+      });
+      this.logger.debug(
+        `Found ${notifications.length} notifications for wallet ${walletAddress}`,
+      );
+      return notifications;
+    } catch (error) {
+      this.logger.error(
+        `Error fetching notifications for wallet ${walletAddress}:`,
+        error,
+      );
+      throw new Error(`Failed to fetch notifications: ${error.message}`);
+    }
   }
 
   async markAsProcessed(id: number): Promise<void> {
-    await this.notificationRepository.update(id, { processed: true });
+    try {
+      const result = await this.notificationRepository.update(id, {
+        processed: true,
+      });
+      if (result.affected === 0) {
+        this.logger.warn(`No notification found with id ${id}`);
+        throw new Error(`Notification with id ${id} not found`);
+      }
+      this.logger.debug(`Marked notification ${id} as processed`);
+    } catch (error) {
+      this.logger.error(
+        `Error marking notification ${id} as processed:`,
+        error,
+      );
+      throw new Error(
+        `Failed to mark notification as processed: ${error.message}`,
+      );
+    }
   }
 }
