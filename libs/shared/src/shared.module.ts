@@ -2,9 +2,8 @@ import { Module } from '@nestjs/common';
 import { SharedService } from './shared.service';
 import { ConfigModule, ConfigService } from '@app/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { CacheModule } from '@nestjs/cache-manager';
-import { RedisClientOptions } from 'redis';
-import * as redisStore from 'cache-manager-redis-store';
+import { RedisModule } from './redis';
+import { TokenStatsModule } from './token-stats';
 
 @Module({
   imports: [
@@ -17,17 +16,10 @@ import * as redisStore from 'cache-manager-redis-store';
       }),
       inject: [ConfigService],
     }),
-    CacheModule.registerAsync<RedisClientOptions>({
-      imports: [ConfigModule],
-      useFactory: async (configService: ConfigService) => ({
-        store: redisStore as any,
-        ...configService.redisConfig,
-        ttl: 60 * 60 * 24, // 24 hours
-      }),
-      inject: [ConfigService],
-    }),
+    RedisModule,
+    TokenStatsModule,
   ],
   providers: [SharedService],
-  exports: [SharedService, TypeOrmModule, CacheModule],
+  exports: [SharedService, TypeOrmModule, RedisModule, TokenStatsModule],
 })
 export class SharedModule {}
