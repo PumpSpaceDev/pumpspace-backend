@@ -1,0 +1,93 @@
+{
+  "$schema": "https://json.schemastore.org/nest-cli",
+  "collection": "@nestjs/schematics",
+  "sourceRoot": "apps",
+  "compilerOptions": {
+    "deleteOutDir": true,
+    "webpack": true
+  },
+  "monorepo": true,
+  "projects": {
+    "data-collector": {
+      "type": "application",
+      "root": "apps/data-collector",
+      "entryFile": "main",
+      "sourceRoot": "apps/data-collector/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/data-collector/tsconfig.app.json"
+      }
+    },
+    "analysis-statistics": {
+      "type": "application",
+      "root": "apps/analysis-statistics",
+      "entryFile": "main",
+      "sourceRoot": "apps/analysis-statistics/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/analysis-statistics/tsconfig.app.json"
+      }
+    },
+    "notification": {
+      "type": "application",
+      "root": "apps/notification",
+      "entryFile": "main",
+      "sourceRoot": "apps/notification/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/notification/tsconfig.app.json"
+      }
+    },
+    "signal-recorder": {
+      "type": "application",
+      "root": "apps/signal-recorder",
+      "entryFile": "main",
+      "sourceRoot": "apps/signal-recorder/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/signal-recorder/tsconfig.app.json"
+      }
+    },
+    "signal-analyzer": {
+      "type": "application",
+      "root": "apps/signal-analyzer",
+      "entryFile": "main",
+      "sourceRoot": "apps/signal-analyzer/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/signal-analyzer/tsconfig.app.json"
+      }
+    },
+    "smart-money-evaluator": {
+      "type": "application",
+      "root": "apps/smart-money-evaluator",
+      "entryFile": "main",
+      "sourceRoot": "apps/smart-money-evaluator/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/smart-money-evaluator/tsconfig.app.json"
+      }
+    },
+    "shared": {
+      "type": "library",
+      "root": "libs/shared",
+      "entryFile": "index",
+      "sourceRoot": "libs/shared/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/shared/tsconfig.lib.json"
+      }
+    },
+    "interfaces": {
+      "type": "library",
+      "root": "libs/interfaces",
+      "entryFile": "index",
+      "sourceRoot": "libs/interfaces/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/interfaces/tsconfig.lib.json"
+      }
+    },
+    "config": {
+      "type": "library",
+      "root": "libs/config",
+      "entryFile": "index",
+      "sourceRoot": "libs/config/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/config/tsconfig.lib.json"
+      }
+    }
+  }
+}

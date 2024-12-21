@@ -1,0 +1,113 @@
+{
+  "name": "pumpspace-backend",
+  "version": "0.0.1",
+  "description": "",
+  "author": "PumpSpaceDev",
+  "private": true,
+  "license": "MIT",
+  "scripts": {
+    "format": "prettier --write \"apps/**/*.ts\" \"libs/**/*.ts\"",
+    "build:data-collector": "nest build data-collector",
+    "build:analysis-statistics": "nest build analysis-statistics",
+    "build:notification": "nest build notification",
+    "build:signal-recorder": "nest build signal-recorder",
+    "build:signal-analyzer": "nest build signal-analyzer",
+    "build:smart-money-evaluator": "nest build smart-money-evaluator",
+    "build:all": "concurrently --kill-others \"npm run build:data-collector\" \"npm run build:analysis-statistics\" \"npm run build:notification\" \"npm run build:signal-recorder\" \"npm run build:signal-analyzer\" \"npm run build:smart-money-evaluator\"",
+    "start:data-collector": "nest start data-collector",
+    "start:analysis-statistics": "nest start analysis-statistics",
+    "start:notification": "nest start notification",
+    "start:signal-recorder": "nest start signal-recorder",
+    "start:signal-analyzer": "nest start signal-analyzer",
+    "start:smart-money-evaluator": "nest start smart-money-evaluator",
+    "start:dev:data-collector": "nest start data-collector --watch",
+    "start:dev:analysis-statistics": "nest start analysis-statistics --watch",
+    "start:dev:notification": "nest start notification --watch",
+    "start:dev:signal-recorder": "nest start signal-recorder --watch",
+    "start:dev:signal-analyzer": "nest start signal-analyzer --watch",
+    "start:dev:smart-money-evaluator": "nest start smart-money-evaluator --watch",
+    "start:debug:data-collector": "nest start data-collector --debug --watch",
+    "start:debug:analysis-statistics": "nest start analysis-statistics --debug --watch",
+    "start:debug:notification": "nest start notification --debug --watch",
+    "start:debug:signal-recorder": "nest start signal-recorder --debug --watch",
+    "start:debug:signal-analyzer": "nest start signal-analyzer --debug --watch",
+    "start:debug:smart-money-evaluator": "nest start smart-money-evaluator --debug --watch",
+    "start:prod:data-collector": "node dist/apps/data-collector/main",
+    "start:prod:analysis-statistics": "node dist/apps/analysis-statistics/main",
+    "start:prod:notification": "node dist/apps/notification/main",
+    "start:prod:signal-recorder": "node dist/apps/signal-recorder/main",
+    "start:prod:signal-analyzer": "node dist/apps/signal-analyzer/main",
+    "start:prod:smart-money-evaluator": "node dist/apps/smart-money-evaluator/main",
+    "start:all": "concurrently --kill-others \"npm run start:data-collector\" \"npm run start:analysis-statistics\" \"npm run start:notification\" \"npm run start:signal-recorder\" \"npm run start:signal-analyzer\" \"npm run start:smart-money-evaluator\"",
+    "start:dev:all": "concurrently --kill-others \"npm run start:dev:data-collector\" \"npm run start:dev:analysis-statistics\" \"npm run start:dev:notification\" \"npm run start:dev:signal-recorder\" \"npm run start:dev:signal-analyzer\" \"npm run start:dev:smart-money-evaluator\"",
+    "start:debug:all": "concurrently --kill-others \"npm run start:debug:data-collector\" \"npm run start:debug:analysis-statistics\" \"npm run start:debug:notification\" \"npm run start:debug:signal-recorder\" \"npm run start:debug:signal-analyzer\" \"npm run start:debug:smart-money-evaluator\"",
+    "start:prod:all": "concurrently --kill-others \"npm run start:prod:data-collector\" \"npm run start:prod:analysis-statistics\" \"npm run start:prod:notification\" \"npm run start:prod:signal-recorder\" \"npm run start:prod:signal-analyzer\" \"npm run start:prod:smart-money-evaluator\"",
+    "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:cov": "jest --coverage",
+    "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
+    "test:e2e": "jest --config ./apps/pumpspace-backend/test/jest-e2e.json",
+    "prepare": "pnpm dlx husky install"
+  },
+  "dependencies": {
+    "@nestjs/common": "^10.0.0",
+    "@nestjs/core": "^10.0.0",
+    "@nestjs/platform-express": "^10.0.0",
+    "globals": "^15.14.0",
+    "reflect-metadata": "^0.2.0",
+    "rxjs": "^7.8.1"
+  },
+  "devDependencies": {
+    "@nestjs/cli": "^10.0.0",
+    "@nestjs/schematics": "^10.0.0",
+    "@nestjs/testing": "^10.0.0",
+    "@types/express": "^4.17.17",
+    "@types/jest": "^29.5.2",
+    "@types/node": "^20.3.1",
+    "@types/supertest": "^6.0.0",
+    "@typescript-eslint/eslint-plugin": "^8.18.1",
+    "@typescript-eslint/parser": "^8.18.1",
+    "concurrently": "^8.0.0",
+    "eslint": "^9.17.0",
+    "eslint-config-prettier": "^9.0.0",
+    "eslint-plugin-prettier": "^5.0.0",
+    "husky": "^8.0.0",
+    "jest": "^29.5.0",
+    "prettier": "^3.0.0",
+    "source-map-support": "^0.5.21",
+    "supertest": "^6.3.3",
+    "ts-jest": "^29.1.0",
+    "ts-loader": "^9.4.3",
+    "ts-node": "^10.9.1",
+    "tsconfig-paths": "^4.2.0",
+    "typescript": "^5.3.2"
+  },
+  "jest": {
+    "moduleFileExtensions": [
+      "js",
+      "json",
+      "ts"
+    ],
+    "rootDir": ".",
+    "testRegex": ".*\\.spec\\.ts$",
+    "transform": {
+      "^.+\\.(t|j)s$": "ts-jest"
+    },
+    "collectCoverageFrom": [
+      "**/*.(t|j)s"
+    ],
+    "coverageDirectory": "./coverage",
+    "testEnvironment": "node",
+    "roots": [
+      "<rootDir>/apps/",
+      "<rootDir>/libs/"
+    ],
+    "moduleNameMapper": {
+      "^@app/shared(|/.*)$": "<rootDir>/libs/shared/src/$1",
+      "^@app/interfaces(|/.*)$": "<rootDir>/libs/interfaces/src/$1",
+      "^@app/config(|/.*)$": "<rootDir>/libs/config/src/$1"
+    }
+  },
+  "packageManager": "pnpm@9.14.3+sha512.c0f53ee99477ed969b82b289ad011a5d16bf1623c957e7f29eabe8d0c00b574c29b8c7f54f6c67ee710c73f285c8154d07ce44b46fe2c0eeb476a90441bac371"
+}
