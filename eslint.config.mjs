@@ -32,8 +32,8 @@ export default [{
         sourceType: "module",
 
         parserOptions: {
-            project: "tsconfig.json",
-            tsconfigRootDir: "/Users/foxer/aiagent/pumpspace-backend",
+            project: "./tsconfig.json",
+            tsconfigRootDir: __dirname,
         },
     },
 
