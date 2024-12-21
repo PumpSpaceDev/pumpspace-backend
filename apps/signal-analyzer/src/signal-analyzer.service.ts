@@ -2,7 +2,6 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { SignalEvaluation } from './entities/signal-evaluation.entity';
-import { CreateSignalEvaluationDto, UpdateSignalEvaluationDto } from '@app/interfaces';
 
 @Injectable()
 export class SignalAnalyzerService {
@@ -11,7 +10,9 @@ export class SignalAnalyzerService {
     private signalEvaluationRepository: Repository<SignalEvaluation>,
   ) {}
 
-  async create(createDto: CreateSignalEvaluationDto): Promise<SignalEvaluation> {
+  async create(
+    createDto: Partial<SignalEvaluation>,
+  ): Promise<SignalEvaluation> {
     const evaluation = this.signalEvaluationRepository.create({
       ...createDto,
       status: 'pending',
@@ -31,12 +32,18 @@ export class SignalAnalyzerService {
     return this.signalEvaluationRepository.findOne({ where: { signalId } });
   }
 
-  async update(id: number, updateDto: UpdateSignalEvaluationDto): Promise<SignalEvaluation> {
+  async update(
+    id: number,
+    updateDto: Partial<SignalEvaluation>,
+  ): Promise<SignalEvaluation> {
     await this.signalEvaluationRepository.update(id, updateDto);
     return this.findOne(id);
   }
 
-  async updateEvaluation(id: number, exitPrice: number): Promise<SignalEvaluation> {
+  async updateEvaluation(
+    id: number,
+    exitPrice: number,
+  ): Promise<SignalEvaluation> {
     const evaluation = await this.findOne(id);
     const profitLoss = exitPrice - evaluation.entryPrice;
     const roi = (profitLoss / evaluation.entryPrice) * 100;

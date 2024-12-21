@@ -24,7 +24,11 @@ export class SignalEvaluation {
   @Column({ type: 'int' })
   holdingPeriod: number;
 
-  @Column({ type: 'timestamp', nullable: false, default: () => 'CURRENT_TIMESTAMP' })
+  @Column({
+    type: 'timestamp',
+    nullable: false,
+    default: () => 'CURRENT_TIMESTAMP',
+  })
   evaluationTime: Date;
 
   @Column({ type: 'varchar', length: 20 })
