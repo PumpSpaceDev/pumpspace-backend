@@ -8,6 +8,7 @@ import { Score } from '../../apps/smart-money-evaluator/src/entities/score.entit
 import { Signal } from '../../apps/signal-recorder/src/entities/signal.entity';
 import { SignalEvaluation } from '../../apps/signal-analyzer/src/entities/signal-evaluation.entity';
 import { TokenBucket } from '../../apps/analysis-statistics/src/entities/token-bucket.entity';
+import { Notification } from '../../apps/notification/src/entities/notification.entity';
 
 config();
 
@@ -27,7 +28,10 @@ export default new DataSource({
     Signal,
     SignalEvaluation,
     TokenBucket,
+    Notification
   ],
   migrations: [join(__dirname, 'migrations', '*.{ts,js}')],
+  migrationsTableName: 'typeorm_migrations',
   synchronize: false,
+  logging: configService.get('DB_LOGGING') === 'true',
 });
