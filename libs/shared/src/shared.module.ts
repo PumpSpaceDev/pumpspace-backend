@@ -5,6 +5,8 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { RedisModule } from './redis';
 import { TokenStatsModule } from './token-stats';
 import { MetricsModule } from './metrics/metrics.module';
+import { CacheModule } from '@nestjs/cache-manager';
+import { LoggerModule } from './logger/logger.module';
 
 @Module({
   imports: [
@@ -17,9 +19,15 @@ import { MetricsModule } from './metrics/metrics.module';
       }),
       inject: [ConfigService],
     }),
+    CacheModule.register({
+      //TODO should be reconsidered
+      ttl: 5, // seconds
+      max: 10, // maximum number of items in cache
+    }),
     RedisModule,
     TokenStatsModule,
     MetricsModule,
+    LoggerModule,
   ],
   providers: [SharedService],
   exports: [
