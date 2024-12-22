@@ -1,58 +1,36 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { TokenBucket } from './entities/token-bucket.entity';
-import Redis from 'ioredis';
 import { ConfigService } from '@app/config';
+import { RedisPubSubService } from '@app/shared';
+import { SwapDto } from '@app/interfaces';
 
 @Injectable()
-export class AnalysisStatisticsService {
+export class AnalysisStatisticsService implements OnModuleInit {
   private readonly logger = new Logger(AnalysisStatisticsService.name);
-  private readonly redis: Redis;
   private readonly bucketWindows = ['5m', '1h', '24h'];
 
   constructor(
     @InjectRepository(TokenBucket)
     private readonly tokenBucketRepository: Repository<TokenBucket>,
     private readonly configService: ConfigService,
-  ) {
-    this.redis = new Redis(this.configService.redisConfig);
-    this.subscribeToTransactions();
+    private readonly redisPubSubService: RedisPubSubService,
+  ) {}
+  onModuleInit() {
+    this.redisPubSubService.subscribeRaydiumSwap(this.processTransaction);
   }
 
-  private async subscribeToTransactions() {
-    const subscriber = new Redis(this.configService.redisConfig);
-
-    subscriber.subscribe('raydium:transactions', (err) => {
-      if (err) {
-        this.logger.error('Failed to subscribe to Raydium transactions:', err);
-        setTimeout(() => this.subscribeToTransactions(), 5000); // Retry after 5 seconds
-        return;
-      }
-      this.logger.log('Subscribed to Raydium transactions');
-    });
-
-    subscriber.on('error', (error) => {
-      this.logger.error('Redis subscription error:', error);
-      setTimeout(() => this.subscribeToTransactions(), 5000); // Retry after 5 seconds
-    });
-
-    subscriber.on('message', async (channel, message) => {
-      try {
-        const transaction = JSON.parse(message);
-        await this.processTransaction(transaction);
-      } catch (error) {
-        this.logger.error('Error processing transaction:', error);
-      }
-    });
-
-    process.on('beforeExit', () => {
-      subscriber.disconnect();
-      this.redis.disconnect();
-    });
-  }
-
-  private async processTransaction(transaction: any) {
+  //TODO 
+  /**
+   * step1. get token info from solana rpc
+   * step2. analyze token info to real buy and sell
+   * step3. update token statistics
+   * step4. publish smart money match
+   * @param transaction 
+   * @returns 
+   */
+  private async processTransaction(transaction: SwapDto) {
     try {
       if (
         !transaction?.amm ||
