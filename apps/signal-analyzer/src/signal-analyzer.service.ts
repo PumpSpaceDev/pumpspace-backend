@@ -5,7 +5,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { LoggerService } from '@app/shared';
+import { Logger } from '@nestjs/common';
 import { SignalEvaluation } from './entities/signal-evaluation.entity';
 import { CreateEvaluationDto } from './dto/create-evaluation.dto';
 import {
@@ -19,7 +19,7 @@ export class SignalAnalyzerService {
   constructor(
     @InjectRepository(SignalEvaluation)
     private signalEvaluationRepository: Repository<SignalEvaluation>,
-    private logger: LoggerService,
+    private readonly logger = new Logger(SignalAnalyzerService.name),
   ) {}
 
   async create(createDto: CreateEvaluationDto): Promise<SignalEvaluation> {

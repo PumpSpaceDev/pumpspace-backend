@@ -12,8 +12,8 @@ import { TokenBucket } from './entities/token-bucket.entity';
     SharedModule,
     TypeOrmModule.forFeature([TokenBucket]),
   ],
-  controllers: [AnalysisStatisticsController],
   providers: [AnalysisStatisticsService],
+  controllers: [AnalysisStatisticsController],
   exports: [TypeOrmModule.forFeature([TokenBucket])],
 })
 export class AnalysisStatisticsModule {}

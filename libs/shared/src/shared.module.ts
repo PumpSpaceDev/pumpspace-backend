@@ -6,6 +6,7 @@ import { RedisModule } from './redis';
 import { TokenStatsModule } from './token-stats';
 import { MetricsModule } from './metrics/metrics.module';
 import { CacheModule } from '@nestjs/cache-manager';
+import { SolanaRpcService } from './services/solana-rpc.service';
 
 @Module({
   imports: [
@@ -27,9 +28,10 @@ import { CacheModule } from '@nestjs/cache-manager';
     TokenStatsModule,
     MetricsModule,
   ],
-  providers: [SharedService],
+  providers: [SharedService, SolanaRpcService],
   exports: [
     SharedService,
+    SolanaRpcService,
     TypeOrmModule,
     RedisModule,
     TokenStatsModule,

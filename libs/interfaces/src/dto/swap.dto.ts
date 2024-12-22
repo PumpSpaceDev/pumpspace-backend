@@ -46,6 +46,24 @@ export class SwapDto {
   @IsBigInt()
   @IsString()
   amountOut: bigint;
+
+  @IsString()
+  @Length(44, 44)
+  @IsOptional()
+  tokenIn?: string;
+
+  @IsString()
+  @Length(44, 44)
+  @IsOptional()
+  tokenOut?: string;
+
+  @IsNumber()
+  @IsOptional()
+  tokenInDecimals?: number;
+
+  @IsNumber()
+  @IsOptional()
+  tokenOutDecimals?: number;
 }
 
 export class SwapFilterDto {
