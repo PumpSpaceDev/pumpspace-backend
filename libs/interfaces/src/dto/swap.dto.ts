@@ -49,11 +49,21 @@ export class SwapDto {
 
   @IsString()
   @Length(44, 44)
-  tokenIn: string;
+  @IsOptional()
+  tokenIn?: string;
 
   @IsString()
   @Length(44, 44)
-  tokenOut: string;
+  @IsOptional()
+  tokenOut?: string;
+
+  @IsNumber()
+  @IsOptional()
+  tokenInDecimals?: number;
+
+  @IsNumber()
+  @IsOptional()
+  tokenOutDecimals?: number;
 }
 
 export class SwapFilterDto {

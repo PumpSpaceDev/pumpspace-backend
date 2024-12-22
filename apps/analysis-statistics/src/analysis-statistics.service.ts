@@ -7,7 +7,9 @@ import { RedisPubSubService } from '@app/shared';
 import { RedisService } from '@app/shared/redis';
 import { SolanaRpcService } from '@app/shared/services/solana-rpc.service';
 import { SwapDto } from '@app/interfaces';
-import { PublicKey } from '@solana/web3.js';
+
+const WSOL_MINT = 'So11111111111111111111111111111111111111112';
+const WSOL_DECIMALS = 9;
 
 @Injectable()
 export class AnalysisStatisticsService implements OnModuleInit {
@@ -77,19 +79,22 @@ export class AnalysisStatisticsService implements OnModuleInit {
       if (
         !transaction?.amm ||
         !transaction?.amountIn ||
-        !transaction?.amountOut
+        !transaction?.amountOut ||
+        !transaction?.signer
       ) {
         this.logger.warn('Invalid transaction data received:', transaction);
         return;
       }
 
       const ammAccount = transaction.amm;
-      let poolInfo = await this.redisService.hgetall(`amm:${ammAccount}`);
+      let poolInfo = JSON.parse(
+        (await this.redisService.hget(`amm:${ammAccount}`, 'data')) || 'null',
+      );
 
-      if (!poolInfo || Object.keys(poolInfo).length === 0) {
+      if (!poolInfo) {
         const response =
           await this.solanaRpcService.getAmmAccountInfo(ammAccount);
-        if (!response) {
+        if (!response || !response.data) {
           this.logger.error(`AMM Pool ${ammAccount} not found.`);
           return;
         }
@@ -100,92 +105,83 @@ export class AnalysisStatisticsService implements OnModuleInit {
           JSON.stringify(poolInfo),
         );
         await this.redisService.expire(`amm:${ammAccount}`, 86400); // Cache for 1 day
-      } else {
-        poolInfo = JSON.parse(poolInfo.data);
       }
 
-      const isBuy = this.determineBuyOrSell(transaction, poolInfo);
-      const parsedEvent = this.createParsedEvent(transaction, poolInfo, isBuy);
+      const memeTokenMint =
+        poolInfo.baseMint === WSOL_MINT
+          ? poolInfo.quoteMint
+          : poolInfo.baseMint;
+
+      let isBuy = false;
+      if (poolInfo.baseMint === WSOL_MINT) {
+        isBuy = transaction.direction === 2;
+      } else if (poolInfo.quoteMint === WSOL_MINT) {
+        isBuy = transaction.direction === 1;
+      }
+
+      const parsedEvent = {
+        signature: transaction.signature,
+        timestamp: new Date().toISOString(),
+        amm: ammAccount,
+        user: transaction.signer,
+        isBuy,
+        tokenIn: isBuy ? WSOL_MINT : memeTokenMint,
+        tokenOut: isBuy ? memeTokenMint : WSOL_MINT,
+        tokenInDecimals: isBuy
+          ? WSOL_DECIMALS
+          : (transaction.tokenInDecimals ?? 9),
+        tokenOutDecimals: isBuy
+          ? (transaction.tokenOutDecimals ?? 9)
+          : WSOL_DECIMALS,
+        tokenInAmount: transaction.amountIn.toString(),
+        tokenOutAmount: transaction.amountOut.toString(),
+        pool: {
+          address: ammAccount,
+          baseToken: poolInfo.baseMint,
+          quoteToken: poolInfo.quoteMint,
+          baseReserve: poolInfo.baseReserve?.toString() || '0',
+          quoteReserve: poolInfo.quoteReserve?.toString() || '0',
+        },
+      };
 
       await this.redisPubSubService.publishSmartMoneyMatches(parsedEvent);
       this.logger.log(`Published parsed event: ${JSON.stringify(parsedEvent)}`);
 
       await this.updateTokenStatistics(
-        transaction.amm,
-        transaction.amountIn,
-        transaction.amountOut,
+        memeTokenMint,
+        BigInt(transaction.amountIn),
+        BigInt(transaction.amountOut),
       );
 
-      if (
-        transaction.signer &&
-        (await this.isSmartMoneyAddress(transaction.signer))
-      ) {
+      if (await this.isSmartMoneyAddress(transaction.signer)) {
         await this.publishSmartMoneyMatch(parsedEvent);
       }
     } catch (error) {
-      this.logger.error(`Error processing transaction: ${error.message}`);
+      this.logger.error('Error processing transaction:', error);
+      this.logger.error('Transaction data:', transaction);
     }
   }
 
-  private parseAmmData(accountInfo: any): Record<string, string> {
+  private parseAmmData(accountInfo: any) {
     try {
-      // Basic AMM pool data structure
-      const data = {
-        baseToken: accountInfo.owner.toString(),
-        quoteToken: new PublicKey(accountInfo.data.slice(0, 32)).toString(),
-        baseReserve: BigInt(
-          '0x' + accountInfo.data.slice(32, 40).toString('hex'),
-        ).toString(),
-        quoteReserve: BigInt(
-          '0x' + accountInfo.data.slice(40, 48).toString('hex'),
-        ).toString(),
+      const ammData = accountInfo.data;
+      return {
+        baseVault: ammData.baseVault.toString(),
+        quoteVault: ammData.quoteVault.toString(),
+        baseMint: ammData.baseMint.toString(),
+        quoteMint: ammData.quoteMint.toString(),
+        baseReserve: ammData.baseReserve,
+        quoteReserve: ammData.quoteReserve,
         lastUpdateTime: new Date().toISOString(),
       };
-      return { data: JSON.stringify(data) };
     } catch (error) {
-      this.logger.error(`Error parsing AMM data: ${error.message}`);
+      this.logger.error('Error parsing AMM data:', error);
+      this.logger.error('Account info:', accountInfo);
       return null;
     }
   }
 
-  private determineBuyOrSell(transaction: SwapDto, poolInfo: any): boolean {
-    try {
-      // Determine if this is a buy or sell based on token flow
-      // true = buy, false = sell
-      const tokenInIsBase = transaction.tokenIn === poolInfo.baseToken;
-      return !tokenInIsBase; // If tokenIn is base token, it's a sell
-    } catch (error) {
-      this.logger.error(`Error determining buy/sell: ${error.message}`);
-      return false;
-    }
-  }
-
-  private createParsedEvent(
-    transaction: SwapDto,
-    poolInfo: any,
-    isBuy: boolean,
-  ) {
-    return {
-      type: isBuy ? 'buy' : 'sell',
-      timestamp: new Date().toISOString(),
-      transaction: {
-        hash: transaction.signature,
-        signer: transaction.signer,
-        amm: transaction.amm,
-        amountIn: transaction.amountIn.toString(),
-        amountOut: transaction.amountOut.toString(),
-        tokenIn: transaction.tokenIn,
-        tokenOut: transaction.tokenOut,
-      },
-      pool: {
-        address: transaction.amm,
-        baseToken: poolInfo.baseToken,
-        quoteToken: poolInfo.quoteToken,
-        baseReserve: poolInfo.baseReserve.toString(),
-        quoteReserve: poolInfo.quoteReserve.toString(),
-      },
-    };
-  }
+  // Buy/sell detection is now handled directly in processTransaction
 
   async getTokenStats(query: { tokenId: string; window: string }) {
     try {
@@ -230,8 +226,8 @@ export class AnalysisStatisticsService implements OnModuleInit {
     amountOut: bigint,
   ) {
     const now = new Date();
-    const volume = Number(amountIn);
-    const price = Number(amountOut) / Number(amountIn);
+    const volume = Number(amountIn.toString());
+    const price = Number(amountOut.toString()) / Number(amountIn.toString());
 
     for (const window of this.bucketWindows) {
       const bucketKey = `${tokenId}:${window}:${this.getBucketTimestamp(now, window)}`;
