@@ -1,6 +1,6 @@
 import {
   Injectable,
-  LoggerService,
+  Logger,
   OnModuleDestroy,
   OnModuleInit,
 } from '@nestjs/common';
@@ -20,6 +20,7 @@ import { BnLayoutFormatter } from '../utils/bn-layout-formatter';
 export class RaydiumGrpcListenerService
   implements OnModuleInit, OnModuleDestroy
 {
+  private readonly logger = new Logger('RaydiumGrpcListenerService');
   private readonly WSOL_MINT = 'So11111111111111111111111111111111111111112';
   private readonly WSOL_DECIMALS = 9;
   private readonly RAYDIUM_AUTHORITY_V4 =
@@ -30,7 +31,6 @@ export class RaydiumGrpcListenerService
   private isRunning = true;
   constructor(
     private readonly configService: ConfigService,
-    private readonly logger: LoggerService,
     private readonly parserService: RaydiumParserService,
     private readonly redisService: RedisService,
     private readonly redisPublisher: RedisPublisherService,

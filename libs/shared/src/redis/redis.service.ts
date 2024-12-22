@@ -1,6 +1,6 @@
 import {
   Injectable,
-  LoggerService,
+  Logger,
   OnModuleDestroy,
   OnModuleInit,
 } from '@nestjs/common';
@@ -11,11 +11,8 @@ import Redis, { RedisOptions } from 'ioredis';
 export class RedisService implements OnModuleInit, OnModuleDestroy {
   private publisher: Redis;
   private subscriber: Redis;
-
-  constructor(
-    private configService: ConfigService,
-    private logger: LoggerService,
-  ) {
+  private readonly logger: Logger = new Logger(RedisService.name);
+  constructor(private configService: ConfigService) {
     const options: RedisOptions = {
       ...this.configService.redisConfig,
       retryStrategy: (times: number) => {

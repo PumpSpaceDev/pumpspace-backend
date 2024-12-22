@@ -1,12 +1,12 @@
-import { Injectable, LoggerService } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@app/config';
 import { RedisService } from '@app/shared';
 
 @Injectable()
 export class RedisPublisherService {
+  private readonly logger: Logger = new Logger('RedisPublisherService');
   constructor(
     private readonly configService: ConfigService,
-    private readonly logger: LoggerService,
     private readonly redisService: RedisService,
   ) {}
 

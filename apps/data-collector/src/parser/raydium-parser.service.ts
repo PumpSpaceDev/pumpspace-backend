@@ -1,4 +1,4 @@
-import { Injectable, LoggerService } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { PublicKey } from '@solana/web3.js';
 import { SolanaParser } from '@shyft-to/solana-transaction-parser';
 import { ParsedInstruction, RaydiumAmmParser } from './raydium/parser';
@@ -11,8 +11,8 @@ export class RaydiumParserService {
   private readonly logsParser: LogsParser;
   private readonly ixParser: SolanaParser;
   public readonly PROGRAM_ID: PublicKey;
-
-  constructor(private readonly logger: LoggerService) {
+  private readonly logger = new Logger(RaydiumParserService.name);
+  constructor() {
     this.raydiumAmmParser = new RaydiumAmmParser();
     this.logsParser = new LogsParser();
     this.PROGRAM_ID = RaydiumAmmParser.PROGRAM_ID;

@@ -2,7 +2,7 @@ import {
   Injectable,
   OnModuleInit,
   OnModuleDestroy,
-  LoggerService,
+  Logger,
 } from '@nestjs/common';
 import { ConfigService } from '@app/config';
 import { DataSource } from 'typeorm';
@@ -12,11 +12,11 @@ import { Cache } from 'cache-manager';
 
 @Injectable()
 export class SharedService implements OnModuleInit, OnModuleDestroy {
+  private readonly logger = new Logger(SharedService.name);
   constructor(
     private configService: ConfigService,
     private dataSource: DataSource,
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
-    private logger: LoggerService,
   ) {}
 
   async onModuleInit() {
