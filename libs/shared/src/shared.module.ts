@@ -6,7 +6,6 @@ import { RedisModule } from './redis';
 import { TokenStatsModule } from './token-stats';
 import { MetricsModule } from './metrics/metrics.module';
 import { CacheModule } from '@nestjs/cache-manager';
-import { LoggerModule } from './logger/logger.module';
 
 @Module({
   imports: [
@@ -27,7 +26,6 @@ import { LoggerModule } from './logger/logger.module';
     RedisModule,
     TokenStatsModule,
     MetricsModule,
-    LoggerModule,
   ],
   providers: [SharedService],
   exports: [

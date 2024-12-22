@@ -1,10 +1,14 @@
-import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
+import {
+  Injectable,
+  OnModuleInit,
+  OnModuleDestroy,
+  LoggerService,
+} from '@nestjs/common';
 import { ConfigService } from '@app/config';
 import { DataSource } from 'typeorm';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Inject } from '@nestjs/common';
 import { Cache } from 'cache-manager';
-import { LoggerService } from './logger/logger.service';
 
 @Injectable()
 export class SharedService implements OnModuleInit, OnModuleDestroy {

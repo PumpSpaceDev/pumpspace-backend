@@ -1,6 +1,11 @@
-import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
+import {
+  Injectable,
+  LoggerService,
+  OnModuleDestroy,
+  OnModuleInit,
+} from '@nestjs/common';
 import { ConfigService } from '@app/config';
-import { LoggerService, RedisService } from '@app/shared';
+import { RedisService } from '@app/shared';
 import { Connection } from '@solana/web3.js';
 import Client, { CommitmentLevel } from '@triton-one/yellowstone-grpc';
 import { PublicKey } from '@solana/web3.js';

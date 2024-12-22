@@ -1,6 +1,6 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, LoggerService } from '@nestjs/common';
 import { ConfigService } from '@app/config';
-import { LoggerService, RedisService } from '@app/shared';
+import { RedisService } from '@app/shared';
 
 @Injectable()
 export class RedisPublisherService {

@@ -7,7 +7,7 @@ import { struct, u8 } from '@solana/buffer-layout';
 import { u64 } from '@solana/buffer-layout-utils';
 import { Injectable } from '@nestjs/common';
 
-interface ParsedInstruction {
+export interface ParsedInstruction {
   name: string;
   programId: string;
   accounts: (

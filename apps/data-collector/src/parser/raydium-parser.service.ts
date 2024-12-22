@@ -1,8 +1,7 @@
-import { Injectable } from '@nestjs/common';
-import { LoggerService } from '@app/shared';
+import { Injectable, LoggerService } from '@nestjs/common';
 import { PublicKey } from '@solana/web3.js';
 import { SolanaParser } from '@shyft-to/solana-transaction-parser';
-import { RaydiumAmmParser } from './raydium/parser';
+import { ParsedInstruction, RaydiumAmmParser } from './raydium/parser';
 import { LogsParser } from './raydium/log-parser';
 import { BnLayoutFormatter } from '../utils/bn-layout-formatter';
 
@@ -56,7 +55,7 @@ export class RaydiumParserService {
     }
   }
 
-  parseTransaction(tx: any) {
+  parseTransaction(tx: any): ParsedInstruction | null {
     if (!tx) {
       this.logger.error('No transaction provided');
       return null;
