@@ -61,9 +61,7 @@ import * as Joi from 'joi';
 
         // Shyft Configuration
         GRPC_ENDPOINT: Joi.string().required().description('Shyft API key'),
-        GRPC_TOKEN: Joi.string()
-          .required()
-          .description('Shyft API endpoint'),
+        GRPC_TOKEN: Joi.string().required().description('Shyft API endpoint'),
         SHYFT_TIMEOUT: Joi.number()
           .default(30000)
           .description('Shyft API timeout in ms'),
