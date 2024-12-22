@@ -1,4 +1,4 @@
-import { Injectable, OnModuleInit } from '@nestjs/common';
+import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@app/config';
 import { LoggerService, RedisService } from '@app/shared';
 import { Connection } from '@solana/web3.js';
@@ -12,7 +12,9 @@ import { TransactionFormatter } from '../utils/transaction-formatter';
 import { BnLayoutFormatter } from '../utils/bn-layout-formatter';
 
 @Injectable()
-export class RaydiumGrpcListenerService implements OnModuleInit {
+export class RaydiumGrpcListenerService
+  implements OnModuleInit, OnModuleDestroy
+{
   private readonly WSOL_MINT = 'So11111111111111111111111111111111111111112';
   private readonly WSOL_DECIMALS = 9;
   private readonly RAYDIUM_AUTHORITY_V4 =
@@ -20,7 +22,7 @@ export class RaydiumGrpcListenerService implements OnModuleInit {
   private readonly TXN_FORMATTER: TransactionFormatter;
   private currentStream: any = null;
   private connection: Connection;
-
+  private isRunning = true;
   constructor(
     private readonly configService: ConfigService,
     private readonly logger: LoggerService,
@@ -29,26 +31,61 @@ export class RaydiumGrpcListenerService implements OnModuleInit {
     private readonly redisPublisher: RedisPublisherService,
     private readonly swapsStorage: SwapsStorageService,
   ) {
+    //TODO move to analysis-statistics module
+    this.connection = new Connection(this.configService.solanaConfig.rpcUrl);
     this.TXN_FORMATTER = new TransactionFormatter();
   }
+  onModuleDestroy() {
+    this.isRunning = false;
+    if (this.currentStream) {
+      try {
+        this.currentStream.end();
+      } catch (error) {
+        this.logger.error('Error while closing stream', error);
+      }
+    }
+  }
 
-  private decodeRaydiumTxn(tx: any) {
-    if (tx.meta?.err) return;
+  async onModuleInit() {
+    // Initialize Solana connection
+    this.initModule();
+  }
 
-    const parsedIxs =
-      this.parserService.parseTransactionWithInnerInstructions(tx);
-    const programIxs = parsedIxs.filter((ix) =>
-      ix.programId.equals(this.parserService.PROGRAM_ID),
+  private async initModule() {
+    const client = new Client(
+      this.configService.grpcConfig.endpoint,
+      this.configService.grpcConfig.token,
     );
 
-    if (programIxs.length === 0) return;
-    const LogsEvent = this.parserService.parseLogMessages(
-      parsedIxs,
-      tx.meta.logMessages,
-    );
-    const result = { instructions: parsedIxs, events: LogsEvent };
-    BnLayoutFormatter.format(result);
-    return result;
+    const req = {
+      accounts: {},
+      slots: {},
+      transactions: {
+        raydiumLiquidityPoolV4: {
+          vote: false,
+          failed: false,
+          signature: undefined,
+          accountInclude: [],
+          accountExclude: [],
+          accountRequired: [this.parserService.PROGRAM_ID.toBase58()],
+        },
+      },
+      transactionsStatus: {},
+      entry: {},
+      blocks: {},
+      blocksMeta: {},
+      accountsDataSlice: [],
+      ping: undefined,
+      commitment: CommitmentLevel.PROCESSED,
+    };
+    while (this.isRunning) {
+      try {
+        await this.handleStream(client, req);
+      } catch (error) {
+        this.logger.error('Stream error, restarting in 1 second...', error);
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+      }
+    }
   }
 
   private async handleStream(client: Client, args: any) {
@@ -116,7 +153,7 @@ export class RaydiumGrpcListenerService implements OnModuleInit {
           // Store swap in database
           await this.swapsStorage.storeSwap({
             signature,
-            timestamp: new Date(txn.blockTime * 1000),
+            timestamp: new Date(txn.blockTime),
             signer,
             amm: ammAccount,
             direction: swapEvent.data.direction,
@@ -220,44 +257,22 @@ export class RaydiumGrpcListenerService implements OnModuleInit {
     await streamClosed;
   }
 
-  async onModuleInit() {
-    // Initialize Solana connection
-    this.connection = new Connection(this.configService.solanaConfig.rpcUrl);
+  private decodeRaydiumTxn(tx: any) {
+    if (tx.meta?.err) return;
 
-    const client = new Client(
-      this.configService.grpcConfig.endpoint,
-      this.configService.grpcConfig.token,
+    const parsedIxs =
+      this.parserService.parseTransactionWithInnerInstructions(tx);
+    const programIxs = parsedIxs.filter((ix) =>
+      ix.programId.equals(this.parserService.PROGRAM_ID),
     );
 
-    const req = {
-      accounts: {},
-      slots: {},
-      transactions: {
-        raydiumLiquidityPoolV4: {
-          vote: false,
-          failed: false,
-          signature: undefined,
-          accountInclude: [],
-          accountExclude: [],
-          accountRequired: [this.parserService.PROGRAM_ID.toBase58()],
-        },
-      },
-      transactionsStatus: {},
-      entry: {},
-      blocks: {},
-      blocksMeta: {},
-      accountsDataSlice: [],
-      ping: undefined,
-      commitment: CommitmentLevel.PROCESSED,
-    };
-
-    while (true) {
-      try {
-        await this.handleStream(client, req);
-      } catch (error) {
-        this.logger.error('Stream error, restarting in 1 second...', error);
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-      }
-    }
+    if (programIxs.length === 0) return;
+    const LogsEvent = this.parserService.parseLogMessages(
+      parsedIxs,
+      tx.meta.logMessages,
+    );
+    const result = { instructions: parsedIxs, events: LogsEvent };
+    BnLayoutFormatter.format(result);
+    return result;
   }
 }
