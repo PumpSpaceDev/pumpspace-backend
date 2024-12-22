@@ -8,7 +8,8 @@
       "@app/shared": ["../../libs/shared/src"],
       "@app/config": ["../../libs/config/src"],
       "@app/shared-swaps": ["../../libs/shared-swaps/src"],
-      "@app/shared-swaps/*": ["../../libs/shared-swaps/src/*"]
+      "@app/shared-swaps/*": ["../../libs/shared-swaps/src/*"],
+      "@app/interfaces": ["../../libs/interfaces/src"]
     },
     "types": ["node"],
     "esModuleInterop": true,

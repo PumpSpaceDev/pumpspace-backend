@@ -5,8 +5,6 @@ import { SharedModule, RedisModule } from '@app/shared';
 import { DataCollectorService } from './data-collector.service';
 import { RaydiumGrpcListenerService } from './grpc/raydium-grpc-listener.service';
 import { RaydiumParserService } from './parser/raydium-parser.service';
-import { RedisPublisherService } from './redis/redis-publisher.service';
-import { SwapsStorageService } from './database/swaps-storage.service';
 import { Swap } from './entities/swap.entity';
 
 @Module({
@@ -28,8 +26,6 @@ import { Swap } from './entities/swap.entity';
     DataCollectorService,
     RaydiumGrpcListenerService,
     RaydiumParserService,
-    RedisPublisherService,
-    SwapsStorageService,
   ],
 })
 export class DataCollectorModule {}

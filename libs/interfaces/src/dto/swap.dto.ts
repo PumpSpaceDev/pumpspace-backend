@@ -1,31 +1,79 @@
-import { IsString, IsNumber, IsDate, IsInt, IsNotEmpty } from 'class-validator';
+import {
+  IsString,
+  IsNumber,
+  Min,
+  Max,
+  Length,
+  IsOptional,
+  IsInt,
+} from 'class-validator';
+import { Transform, Type } from 'class-transformer';
+
+// Custom decorator for bigint validation
+function IsBigInt() {
+  return Transform(({ value }) => {
+    try {
+      return BigInt(value);
+    } catch {
+      return value;
+    }
+  });
+}
 
 export class SwapDto {
-  @IsNotEmpty()
   @IsString()
+  @Length(88, 88)
   signature: string;
 
-  @IsNotEmpty()
-  @IsDate()
+  @Type(() => Date)
   timestamp: Date;
 
-  @IsNotEmpty()
   @IsString()
+  @Length(44, 44)
   signer: string;
 
-  @IsNotEmpty()
   @IsString()
+  @Length(44, 44)
   amm: string;
 
-  @IsNotEmpty()
   @IsInt()
   direction: number;
 
-  @IsNotEmpty()
-  @IsNumber()
+  @IsBigInt()
+  @IsString()
   amountIn: bigint;
 
-  @IsNotEmpty()
-  @IsNumber()
+  @IsBigInt()
+  @IsString()
   amountOut: bigint;
+}
+
+export class SwapFilterDto {
+  @IsString()
+  @Length(44, 44)
+  @IsOptional()
+  signer?: string;
+
+  @IsString()
+  @Length(44, 44)
+  @IsOptional()
+  amm?: string;
+
+  @IsNumber()
+  @IsOptional()
+  @Type(() => Number)
+  @Min(0)
+  skip?: number = 0;
+
+  @IsNumber()
+  @IsOptional()
+  @Type(() => Number)
+  @Min(1)
+  @Max(100)
+  take?: number = 20;
+
+  @IsString()
+  @Length(1, 100)
+  @IsOptional()
+  market?: string;
 }

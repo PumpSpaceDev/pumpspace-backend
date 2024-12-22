@@ -1,9 +1,8 @@
 export * from './shared.module';
 export * from './shared.service';
-
+export * from './token-stats';
 export * from './metrics';
-export * from './redis/redis.module';
-export * from './redis/redis.service';
+export * from './redis';
 
 import { utilities, WinstonModule } from 'nest-winston';
 import { format, transports, Logform } from 'winston';

@@ -5,39 +5,27 @@ import {
   OnModuleInit,
 } from '@nestjs/common';
 import { ConfigService } from '@app/config';
-import { RedisService } from '@app/shared';
-import { Connection } from '@solana/web3.js';
 import Client, { CommitmentLevel } from '@triton-one/yellowstone-grpc';
-import { PublicKey } from '@solana/web3.js';
-import { LIQUIDITY_STATE_LAYOUT_V4 } from '@raydium-io/raydium-sdk';
 import { RaydiumParserService } from '../parser/raydium-parser.service';
-import { RedisPublisherService } from '../redis/redis-publisher.service';
-import { SwapsStorageService } from '../database/swaps-storage.service';
 import { TransactionFormatter } from '../utils/transaction-formatter';
 import { BnLayoutFormatter } from '../utils/bn-layout-formatter';
+import { DataCollectorService } from '../data-collector.service';
 
 @Injectable()
 export class RaydiumGrpcListenerService
   implements OnModuleInit, OnModuleDestroy
 {
   private readonly logger = new Logger('RaydiumGrpcListenerService');
-  private readonly WSOL_MINT = 'So11111111111111111111111111111111111111112';
-  private readonly WSOL_DECIMALS = 9;
-  private readonly RAYDIUM_AUTHORITY_V4 =
-    '5Q544fKrFoe6tsEbD7S8EmxGTJYAKtTVhAW5Q5pge4j1';
   private readonly TXN_FORMATTER: TransactionFormatter;
   private currentStream: any = null;
-  private connection: Connection;
   private isRunning = true;
   constructor(
     private readonly configService: ConfigService,
     private readonly parserService: RaydiumParserService,
-    private readonly redisService: RedisService,
-    private readonly redisPublisher: RedisPublisherService,
-    private readonly swapsStorage: SwapsStorageService,
+
+    private readonly dataCollectorService: DataCollectorService,
   ) {
     //TODO move to analysis-statistics module
-    this.connection = new Connection(this.configService.solanaConfig.rpcUrl);
     this.TXN_FORMATTER = new TransactionFormatter();
   }
   onModuleDestroy() {
@@ -155,8 +143,7 @@ export class RaydiumGrpcListenerService
               ? swapEvent.data.outAmount
               : swapEvent.data.amountOut;
 
-          // Store swap in database
-          await this.swapsStorage.storeSwap({
+          await this.dataCollectorService.saveSwap({
             signature,
             timestamp: new Date(txn.blockTime),
             signer,
@@ -165,82 +152,6 @@ export class RaydiumGrpcListenerService
             amountIn,
             amountOut,
           });
-
-          // Get token info from rpc
-          let poolInfo = JSON.parse(
-            await this.redisService.hget('amm:', ammAccount),
-          );
-          if (!poolInfo) {
-            const response = await this.connection.getAccountInfo(
-              new PublicKey(ammAccount),
-            );
-            if (!response || !response.data) {
-              this.logger.error(`Token ${ammAccount} has no amm pool`);
-              return;
-            }
-            const ammData = LIQUIDITY_STATE_LAYOUT_V4.decode(response.data);
-            BnLayoutFormatter.format(ammData);
-            poolInfo = {
-              baseVault: ammData.baseVault.toString(),
-              quoteVault: ammData.quoteVault.toString(),
-              baseMint: ammData.baseMint.toString(),
-              quoteMint: ammData.quoteMint.toString(),
-            };
-            await this.redisService.hset(
-              'amm:',
-              ammAccount,
-              JSON.stringify(ammData),
-            );
-          }
-
-          const memeTokenMint =
-            poolInfo.baseMint === this.WSOL_MINT
-              ? poolInfo.quoteMint
-              : poolInfo.baseMint;
-
-          let isBuy = false;
-          if (poolInfo.baseMint === this.WSOL_MINT) {
-            isBuy = swapEvent.data.direction === 2;
-          } else if (poolInfo.quoteMint === this.WSOL_MINT) {
-            isBuy = swapEvent.data.direction === 1;
-          }
-
-          const memeTokenDesimals = txn.meta.postTokenBalances.find(
-            (balance) => balance.mint === memeTokenMint,
-          ).uiTokenAmount.decimals;
-          const baseVaultPostBalance = txn.meta.postTokenBalances.find(
-            (balance) =>
-              balance.mint === poolInfo.baseMint &&
-              balance.owner === this.RAYDIUM_AUTHORITY_V4,
-          ).uiTokenAmount.amount;
-          const quoteVaultPostBalance = txn.meta.postTokenBalances.find(
-            (balance) =>
-              balance.mint === poolInfo.quoteMint &&
-              balance.owner === this.RAYDIUM_AUTHORITY_V4,
-          ).uiTokenAmount.amount;
-
-          this.logger.log(
-            '================ New Raydium Trade ==================',
-          );
-
-          const parsedEvent = {
-            signature,
-            timestamp: txn.blockTime,
-            amm: ammAccount,
-            user: signer,
-            isBuy,
-            tokenIn: isBuy ? this.WSOL_MINT : memeTokenMint,
-            tokenOut: isBuy ? memeTokenMint : this.WSOL_MINT,
-            tokenInDecimals: isBuy ? this.WSOL_DECIMALS : memeTokenDesimals,
-            tokenOutDecimals: isBuy ? memeTokenDesimals : this.WSOL_DECIMALS,
-            tokenInAmount: amountIn,
-            tokenOutAmount: amountOut,
-            baseVaultPostBalance: BigInt(baseVaultPostBalance || 0),
-            quoteVaultPostBalance: BigInt(quoteVaultPostBalance || 0),
-          };
-
-          this.logger.debug('Parsed event: ' + JSON.stringify(parsedEvent));
-          await this.redisPublisher.publish('raydium:swaps', parsedEvent);
         }
       }
     });

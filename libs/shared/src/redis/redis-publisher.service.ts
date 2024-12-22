@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@app/config';
-import { RedisService } from '@app/shared';
+import { SwapDto } from '@app/interfaces';
+import { RedisService } from './redis.service';
 
 @Injectable()
 export class RedisPublisherService {
@@ -10,7 +11,10 @@ export class RedisPublisherService {
     private readonly redisService: RedisService,
   ) {}
 
-  async publish(channel: string, message: any): Promise<void> {
+  async publishRaydiumSwap(swap: SwapDto): Promise<void> {
+    return this.publish('raydium:swaps', JSON.stringify(swap));
+  }
+  private async publish(channel: string, message: any): Promise<void> {
     try {
       this.logger.debug(`Publishing message to channel: ${channel}`);
       await this.redisService.publish(channel, message);
