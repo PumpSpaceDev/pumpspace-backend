@@ -1,6 +1,6 @@
 import { Entity, Column, PrimaryColumn, Index } from 'typeorm';
 
-@Entity('swaps')
+@Entity('swap_history')
 @Index(['signer'])
 @Index(['amm'])
 @Index(['amm', 'timestamp'])
