@@ -2,7 +2,7 @@ import { Injectable, Logger, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Swap } from './entities/swap.entity';
-import { RedisPublisherService } from '@app/shared';
+import { RedisPubSubService } from '@app/shared';
 import { SwapDto } from '@app/interfaces';
 @Injectable()
 export class DataCollectorService {
@@ -11,7 +11,7 @@ export class DataCollectorService {
   constructor(
     @InjectRepository(Swap)
     private readonly swapRepository: Repository<Swap>,
-    private readonly redisPublisher: RedisPublisherService,
+    private readonly redisPublisher: RedisPubSubService,
   ) {}
 
   //TODO should support batch saving of swaps

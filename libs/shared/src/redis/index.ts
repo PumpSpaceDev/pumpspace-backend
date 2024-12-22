@@ -1,3 +1,3 @@
 export * from './redis.service';
 export * from './redis.module';
-export * from './redis-publisher.service';
+export * from './redisPubSub.service';
