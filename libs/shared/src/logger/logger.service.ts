@@ -1,8 +1,4 @@
-import {
-  Injectable,
-  LoggerService as NestLoggerService,
-  Scope,
-} from '@nestjs/common';
+import { Injectable, LoggerService as NestLoggerService } from '@nestjs/common';
 import { ConfigService } from '@app/config';
 import * as winston from 'winston';
 import { AsyncLocalStorage } from 'async_hooks';
@@ -11,7 +7,7 @@ import * as path from 'path';
 
 const correlationStorage = new AsyncLocalStorage<string>();
 
-@Injectable({ scope: Scope.TRANSIENT })
+@Injectable()
 export class LoggerService implements NestLoggerService {
   private logger: winston.Logger;
 
