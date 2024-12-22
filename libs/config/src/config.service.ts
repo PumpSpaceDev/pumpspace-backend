@@ -11,11 +11,11 @@ export class ConfigService {
     try {
       return {
         type: 'postgres' as const,
-        host: this.getRequiredConfig<string>('PSQL_HOST'),
-        port: this.configService.get<number>('PSQL_PORT', 5432),
-        username: this.getRequiredConfig<string>('PSQL_USER'),
-        password: this.getRequiredConfig<string>('PSQL_PASSWORD'),
-        database: this.getRequiredConfig<string>('PSQL_DB'),
+        host: this.getRequiredConfig<string>('DB_HOST'),
+        port: this.configService.get<number>('DB_PORT', 5432),
+        username: this.getRequiredConfig<string>('DB_USERNAME'),
+        password: this.getRequiredConfig<string>('DB_PASSWORD'),
+        database: this.getRequiredConfig<string>('DB_DATABASE'),
         synchronize: this.configService.get<boolean>('DB_SYNCHRONIZE', false),
         logging: this.configService.get<boolean>('DB_LOGGING', true),
         ssl: this.configService.get<boolean>('DB_SSL', false),

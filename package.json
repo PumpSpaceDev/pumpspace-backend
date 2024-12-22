@@ -49,11 +49,10 @@
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./apps/pumpspace-backend/test/jest-e2e.json",
     "prepare": "pnpm dlx husky install",
-    "typeorm": "typeorm-ts-node-commonjs",
-    "migration:generate": "pnpm run typeorm -- -d src/database/typeorm.config.ts migration:generate",
-    "migration:run": "pnpm run typeorm -- -d src/database/typeorm.config.ts migration:run",
+    "typeorm": "ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js",
+    "migration:generate": "pnpm run typeorm -d src/database/typeorm.config.ts migration:generate src/database/migrations/$MIGRATION_NAME",
     "migration:revert": "pnpm run typeorm -- -d src/database/typeorm.config.ts migration:revert",
-    "migration:generate:script": "ts-node scripts/generate-migration.ts"
+    "migration:run:script": "ts-node -r tsconfig-paths/register scripts/run-migration.ts"
   },
   "dependencies": {
     "@nestjs/bull": "^10.2.3",
