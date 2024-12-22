@@ -2,7 +2,6 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@app/config';
 import { SharedModule, RedisModule } from '@app/shared';
-import { DataCollectorController } from './data-collector.controller';
 import { DataCollectorService } from './data-collector.service';
 import { RaydiumGrpcListenerService } from './grpc/raydium-grpc-listener.service';
 import { RaydiumParserService } from './parser/raydium-parser.service';
@@ -25,7 +24,6 @@ import { Swap } from './entities/swap.entity';
       }),
     }),
   ],
-  controllers: [DataCollectorController],
   providers: [
     DataCollectorService,
     RaydiumGrpcListenerService,
