@@ -60,8 +60,8 @@ import * as Joi from 'joi';
           .description('Redis connection pool size'),
 
         // Shyft Configuration
-        SHYFT_API_KEY: Joi.string().required().description('Shyft API key'),
-        SHYFT_ENDPOINT: Joi.string()
+        GRPC_ENDPOINT: Joi.string().required().description('Shyft API key'),
+        GRPC_TOKEN: Joi.string()
           .required()
           .description('Shyft API endpoint'),
         SHYFT_TIMEOUT: Joi.number()
