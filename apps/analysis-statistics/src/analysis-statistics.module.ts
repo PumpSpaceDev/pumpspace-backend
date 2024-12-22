@@ -13,10 +13,7 @@ import { TokenBucket } from './entities/token-bucket.entity';
     SharedModule,
     TypeOrmModule.forFeature([TokenBucket]),
   ],
-  providers: [
-    AnalysisStatisticsService,
-    SharedRedisService,
-  ],
+  providers: [AnalysisStatisticsService, SharedRedisService],
   controllers: [AnalysisStatisticsController],
   exports: [TypeOrmModule.forFeature([TokenBucket])],
 })

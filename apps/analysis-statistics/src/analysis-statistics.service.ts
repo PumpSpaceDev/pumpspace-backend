@@ -35,11 +35,11 @@ export class AnalysisStatisticsService implements OnModuleInit {
       try {
         this.logger.log('Starting periodic persistence of token statistics...');
         const now = new Date();
-        
+
         for (const window of this.bucketWindows) {
           const pattern = `*:${window}:${this.getBucketTimestamp(now, window)}`;
           const keys = await this.redisService.keys(pattern);
-          
+
           for (const key of keys) {
             const bucket = await this.redisService.get(key);
             if (bucket) {
@@ -49,12 +49,12 @@ export class AnalysisStatisticsService implements OnModuleInit {
                 key,
                 bucket.volume,
                 bucket.price,
-                new Date(bucket.lastUpdated)
+                new Date(bucket.lastUpdated),
               );
             }
           }
         }
-        
+
         this.logger.log('Completed periodic persistence of token statistics');
       } catch (error) {
         this.logger.error('Error during periodic persistence:', error);
