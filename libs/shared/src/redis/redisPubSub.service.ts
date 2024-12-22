@@ -4,6 +4,8 @@ import { SwapDto } from '@app/interfaces';
 import { RedisService } from './redis.service';
 
 const RAYDIUM_SWAPS_CHANNEL = 'raydium:swaps';
+const SMART_MONEY_MATCHES_CHANNEL = 'smart-money:matches';
+
 @Injectable()
 export class RedisPubSubService {
   private readonly logger: Logger = new Logger(RedisPubSubService.name);
@@ -28,6 +30,13 @@ export class RedisPubSubService {
         const swap = JSON.parse(message);
         callback(swap);
       },
+    );
+  }
+
+  async publishSmartMoneyMatches(event: any): Promise<void> {
+    await this.redisService.publish(
+      SMART_MONEY_MATCHES_CHANNEL,
+      JSON.stringify(event),
     );
   }
 }

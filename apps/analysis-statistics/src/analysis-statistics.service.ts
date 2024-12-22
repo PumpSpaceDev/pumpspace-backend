@@ -107,7 +107,7 @@ export class AnalysisStatisticsService implements OnModuleInit {
       const isBuy = this.determineBuyOrSell(transaction, poolInfo);
       const parsedEvent = this.createParsedEvent(transaction, poolInfo, isBuy);
 
-      await this.redisService.publish('smart-money:matches', parsedEvent);
+      await this.redisPubSubService.publishSmartMoneyMatches(parsedEvent);
       this.logger.log(`Published parsed event: ${JSON.stringify(parsedEvent)}`);
 
       await this.updateTokenStatistics(
@@ -311,7 +311,7 @@ export class AnalysisStatisticsService implements OnModuleInit {
   }
 
   private async publishSmartMoneyMatch(transaction: any) {
-    await this.redisService.publish('smart-money:matches', {
+    await this.redisPubSubService.publishSmartMoneyMatches({
       address: transaction.signer,
       transaction: transaction,
       timestamp: new Date().toISOString(),
