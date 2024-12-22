@@ -1,14 +1,11 @@
 import { NestFactory } from '@nestjs/core';
 import { DataCollectorModule } from './data-collector.module';
-import { LoggerService } from '@app/shared';
-
+import { logger } from '@app/shared';
 async function bootstrap() {
   const app = await NestFactory.createApplicationContext(DataCollectorModule, {
-    bufferLogs: true,
+    logger,
   });
 
-  const logger = app.get(LoggerService);
-  app.useLogger(logger);
   app.enableShutdownHooks();
 }
 bootstrap();

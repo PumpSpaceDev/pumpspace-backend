@@ -1,10 +1,34 @@
 export * from './shared.module';
 export * from './shared.service';
-export * from './logger/logger.module';
-export * from './logger/logger.service';
-export * from './logger/correlation.interceptor';
+
 export * from './metrics';
 export * from './redis/redis.module';
 export * from './redis/redis.service';
-export * from './logger/logger.module';
-export * from './logger/logger.service';
+
+import { utilities, WinstonModule } from 'nest-winston';
+import { format, transports, Logform } from 'winston';
+
+const { NODE_ENV, LOG_LEVEL } = process.env;
+
+let defaultLogLevel = 'debug';
+const loggerFormatters: Logform.Format[] = [
+  format.timestamp({
+    format: 'DD/MM/YYYY HH:mm:ss.SSS',
+  }),
+  format.ms(),
+  utilities.format.nestLike('Worker', {}),
+];
+
+if (NODE_ENV === 'production') {
+  defaultLogLevel = 'info';
+  loggerFormatters.push(format.json());
+}
+
+export const logger = WinstonModule.createLogger({
+  level: LOG_LEVEL || defaultLogLevel,
+  transports: [
+    new transports.Console({
+      format: format.combine(...loggerFormatters),
+    }),
+  ],
+});
