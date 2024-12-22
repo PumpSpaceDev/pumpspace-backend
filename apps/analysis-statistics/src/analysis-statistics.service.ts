@@ -90,20 +90,21 @@ export class AnalysisStatisticsService implements OnModuleInit {
     }
   }
 
-  private parseAmmData(accountInfo: any) {
+  private parseAmmData(accountInfo: any): Record<string, string> {
     try {
       // Basic AMM pool data structure
-      return {
+      const data = {
         baseToken: accountInfo.owner.toString(),
         quoteToken: new PublicKey(accountInfo.data.slice(0, 32)).toString(),
         baseReserve: BigInt(
           '0x' + accountInfo.data.slice(32, 40).toString('hex'),
-        ),
+        ).toString(),
         quoteReserve: BigInt(
           '0x' + accountInfo.data.slice(40, 48).toString('hex'),
-        ),
+        ).toString(),
         lastUpdateTime: new Date().toISOString(),
       };
+      return { data: JSON.stringify(data) };
     } catch (error) {
       this.logger.error(`Error parsing AMM data: ${error.message}`);
       return null;
@@ -199,22 +200,22 @@ export class AnalysisStatisticsService implements OnModuleInit {
       const bucketKey = `${tokenId}:${window}:${this.getBucketTimestamp(now, window)}`;
 
       try {
-        await this.redisService.hset(bucketKey, 'volume', volume.toString());
-        await this.redisService.hset(bucketKey, 'price', price.toString());
-        await this.redisService.hset(
-          bucketKey,
-          'lastUpdated',
-          now.toISOString(),
-        );
+        const existingBucket = await this.redisService.get(bucketKey) || {};
 
-        const ttl = this.getWindowTTL(window);
-        await this.redisService.expire(bucketKey, ttl);
+        const updatedBucket = {
+          volume: (existingBucket.volume || 0) + volume,
+          price: price,
+          transactionCount: (existingBucket.transactionCount || 0) + 1,
+          lastUpdated: now.toISOString(),
+        };
+
+        await this.redisService.set(bucketKey, updatedBucket, this.getWindowTTL(window));
 
         await this.persistBucketIfNeeded(
           tokenId,
           bucketKey,
-          volume,
-          price,
+          updatedBucket.volume,
+          updatedBucket.price,
           now,
         );
       } catch (error) {

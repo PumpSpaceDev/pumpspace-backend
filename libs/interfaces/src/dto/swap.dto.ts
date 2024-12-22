@@ -46,6 +46,14 @@ export class SwapDto {
   @IsBigInt()
   @IsString()
   amountOut: bigint;
+
+  @IsString()
+  @Length(44, 44)
+  tokenIn: string;
+
+  @IsString()
+  @Length(44, 44)
+  tokenOut: string;
 }
 
 export class SwapFilterDto {
