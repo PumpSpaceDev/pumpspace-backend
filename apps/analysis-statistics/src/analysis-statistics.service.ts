@@ -94,7 +94,11 @@ export class AnalysisStatisticsService implements OnModuleInit {
           return;
         }
         poolInfo = this.parseAmmData(response);
-        await this.redisService.hset(`amm:${ammAccount}`, 'data', JSON.stringify(poolInfo));
+        await this.redisService.hset(
+          `amm:${ammAccount}`,
+          'data',
+          JSON.stringify(poolInfo),
+        );
         await this.redisService.expire(`amm:${ammAccount}`, 86400); // Cache for 1 day
       } else {
         poolInfo = JSON.parse(poolInfo.data);
@@ -243,10 +247,26 @@ export class AnalysisStatisticsService implements OnModuleInit {
         };
 
         // Set each field individually
-        await this.redisService.hset(bucketKey, 'volume', updatedBucket.volume.toString());
-        await this.redisService.hset(bucketKey, 'price', updatedBucket.price.toString());
-        await this.redisService.hset(bucketKey, 'transactionCount', updatedBucket.transactionCount.toString());
-        await this.redisService.hset(bucketKey, 'lastUpdated', updatedBucket.lastUpdated);
+        await this.redisService.hset(
+          bucketKey,
+          'volume',
+          updatedBucket.volume.toString(),
+        );
+        await this.redisService.hset(
+          bucketKey,
+          'price',
+          updatedBucket.price.toString(),
+        );
+        await this.redisService.hset(
+          bucketKey,
+          'transactionCount',
+          updatedBucket.transactionCount.toString(),
+        );
+        await this.redisService.hset(
+          bucketKey,
+          'lastUpdated',
+          updatedBucket.lastUpdated,
+        );
         await this.redisService.expire(bucketKey, this.getWindowTTL(window));
 
         await this.persistBucketIfNeeded(
