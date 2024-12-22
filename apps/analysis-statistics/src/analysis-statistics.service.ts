@@ -4,7 +4,7 @@ import { Repository } from 'typeorm';
 import { TokenBucket } from './entities/token-bucket.entity';
 import { ConfigService } from '@app/config';
 import { RedisPubSubService } from '@app/shared';
-import { RedisService } from '@app/shared/redis';
+import { SharedRedisService } from '@app/shared/services/shared-redis.service';
 import { SolanaRpcService } from '@app/shared/services/solana-rpc.service';
 import { SwapDto } from '@app/interfaces';
 import { PublicKey } from '@solana/web3.js';
@@ -13,17 +13,53 @@ import { PublicKey } from '@solana/web3.js';
 export class AnalysisStatisticsService implements OnModuleInit {
   private readonly logger = new Logger(AnalysisStatisticsService.name);
   private readonly bucketWindows = ['5m', '1h', '24h'];
+  private persistenceInterval: NodeJS.Timeout;
+
+  private readonly PERSISTENCE_INTERVAL = 5 * 60 * 1000; // 5 minutes
 
   constructor(
     @InjectRepository(TokenBucket)
     private readonly tokenBucketRepository: Repository<TokenBucket>,
     private readonly configService: ConfigService,
     private readonly redisPubSubService: RedisPubSubService,
-    private readonly redisService: RedisService,
+    private readonly redisService: SharedRedisService,
     private readonly solanaRpcService: SolanaRpcService,
   ) {}
   onModuleInit() {
     this.redisPubSubService.subscribeRaydiumSwap(this.processTransaction);
+    this.startPeriodicPersistence();
+  }
+
+  private startPeriodicPersistence() {
+    this.persistenceInterval = setInterval(async () => {
+      try {
+        this.logger.log('Starting periodic persistence of token statistics...');
+        const now = new Date();
+        
+        for (const window of this.bucketWindows) {
+          const pattern = `*:${window}:${this.getBucketTimestamp(now, window)}`;
+          const keys = await this.redisService.keys(pattern);
+          
+          for (const key of keys) {
+            const bucket = await this.redisService.get(key);
+            if (bucket) {
+              const [tokenId] = key.split(':');
+              await this.persistBucketIfNeeded(
+                tokenId,
+                key,
+                bucket.volume,
+                bucket.price,
+                new Date(bucket.lastUpdated)
+              );
+            }
+          }
+        }
+        
+        this.logger.log('Completed periodic persistence of token statistics');
+      } catch (error) {
+        this.logger.error('Error during periodic persistence:', error);
+      }
+    }, this.PERSISTENCE_INTERVAL);
   }
 
   //TODO
@@ -200,7 +236,7 @@ export class AnalysisStatisticsService implements OnModuleInit {
       const bucketKey = `${tokenId}:${window}:${this.getBucketTimestamp(now, window)}`;
 
       try {
-        const existingBucket = await this.redisService.get(bucketKey) || {};
+        const existingBucket = (await this.redisService.get(bucketKey)) || {};
 
         const updatedBucket = {
           volume: (existingBucket.volume || 0) + volume,
@@ -209,7 +245,11 @@ export class AnalysisStatisticsService implements OnModuleInit {
           lastUpdated: now.toISOString(),
         };
 
-        await this.redisService.set(bucketKey, updatedBucket, this.getWindowTTL(window));
+        await this.redisService.set(
+          bucketKey,
+          updatedBucket,
+          this.getWindowTTL(window),
+        );
 
         await this.persistBucketIfNeeded(
           tokenId,

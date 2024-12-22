@@ -39,6 +39,10 @@ export class SharedRedisService {
     await this.redisClient.expire(key, seconds);
   }
 
+  async keys(pattern: string): Promise<string[]> {
+    return this.redisClient.keys(pattern);
+  }
+
   async subscribe(
     channel: string,
     callback: (message: Record<string, any>) => void,
