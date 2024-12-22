@@ -1,14 +1,11 @@
 import { NestFactory } from '@nestjs/core';
 import { AnalysisStatisticsModule } from './analysis-statistics.module';
-import { Logger } from '@nestjs/common';
+import { logger } from '@app/shared';
 
 async function bootstrap() {
-  const app = await NestFactory.createApplicationContext(
-    AnalysisStatisticsModule,
-    {
-      logger: new Logger('AnalysisStatisticsBootstrap'),
-    },
-  );
+  const app = await NestFactory.createApplicationContext(AnalysisStatisticsModule, {
+    logger,
+  });
 
   app.enableShutdownHooks();
 }

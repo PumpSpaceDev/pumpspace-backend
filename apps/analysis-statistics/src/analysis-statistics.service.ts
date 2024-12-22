@@ -4,7 +4,7 @@ import { Repository } from 'typeorm';
 import { TokenBucket } from './entities/token-bucket.entity';
 import { ConfigService } from '@app/config';
 import { RedisPubSubService } from '@app/shared';
-import { SharedRedisService } from '@app/shared/services/shared-redis.service';
+import { RedisService } from '@app/shared/redis';
 import { SolanaRpcService } from '@app/shared/services/solana-rpc.service';
 import { SwapDto } from '@app/interfaces';
 import { PublicKey } from '@solana/web3.js';
@@ -22,7 +22,7 @@ export class AnalysisStatisticsService implements OnModuleInit {
     private readonly tokenBucketRepository: Repository<TokenBucket>,
     private readonly configService: ConfigService,
     private readonly redisPubSubService: RedisPubSubService,
-    private readonly redisService: SharedRedisService,
+    private readonly redisService: RedisService,
     private readonly solanaRpcService: SolanaRpcService,
   ) {}
   onModuleInit() {
@@ -38,17 +38,18 @@ export class AnalysisStatisticsService implements OnModuleInit {
 
         for (const window of this.bucketWindows) {
           const pattern = `*:${window}:${this.getBucketTimestamp(now, window)}`;
-          const keys = await this.redisService.keys(pattern);
+          const publisher = this.redisService.getPublisher();
+          const keys = await publisher.keys(pattern);
 
           for (const key of keys) {
-            const bucket = await this.redisService.get(key);
-            if (bucket) {
+            const bucket = await this.redisService.hgetall(key);
+            if (bucket && bucket.volume && bucket.price && bucket.lastUpdated) {
               const [tokenId] = key.split(':');
               await this.persistBucketIfNeeded(
                 tokenId,
                 key,
-                bucket.volume,
-                bucket.price,
+                Number(bucket.volume),
+                Number(bucket.price),
                 new Date(bucket.lastUpdated),
               );
             }
@@ -93,11 +94,7 @@ export class AnalysisStatisticsService implements OnModuleInit {
           return;
         }
         poolInfo = this.parseAmmData(response);
-        await this.redisService.hset(
-          `amm:${ammAccount}`,
-          'data',
-          JSON.stringify(poolInfo),
-        );
+        await this.redisService.hset(`amm:${ammAccount}`, 'data', JSON.stringify(poolInfo));
         await this.redisService.expire(`amm:${ammAccount}`, 86400); // Cache for 1 day
       } else {
         poolInfo = JSON.parse(poolInfo.data);
@@ -236,20 +233,21 @@ export class AnalysisStatisticsService implements OnModuleInit {
       const bucketKey = `${tokenId}:${window}:${this.getBucketTimestamp(now, window)}`;
 
       try {
-        const existingBucket = (await this.redisService.get(bucketKey)) || {};
+        const existingBucket = await this.redisService.hgetall(bucketKey);
 
         const updatedBucket = {
-          volume: (existingBucket.volume || 0) + volume,
+          volume: (Number(existingBucket?.volume) || 0) + volume,
           price: price,
-          transactionCount: (existingBucket.transactionCount || 0) + 1,
+          transactionCount: (Number(existingBucket?.transactionCount) || 0) + 1,
           lastUpdated: now.toISOString(),
         };
 
-        await this.redisService.set(
-          bucketKey,
-          updatedBucket,
-          this.getWindowTTL(window),
-        );
+        // Set each field individually
+        await this.redisService.hset(bucketKey, 'volume', updatedBucket.volume.toString());
+        await this.redisService.hset(bucketKey, 'price', updatedBucket.price.toString());
+        await this.redisService.hset(bucketKey, 'transactionCount', updatedBucket.transactionCount.toString());
+        await this.redisService.hset(bucketKey, 'lastUpdated', updatedBucket.lastUpdated);
+        await this.redisService.expire(bucketKey, this.getWindowTTL(window));
 
         await this.persistBucketIfNeeded(
           tokenId,
