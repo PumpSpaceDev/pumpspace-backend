@@ -72,6 +72,7 @@
     "@types/uuid": "^10.0.0",
     "@types/winston": "^2.4.4",
     "@willsoto/nestjs-prometheus": "^6.0.1",
+    "bignumber.js": "^9.1.2",
     "bull": "^4.16.5",
     "cache-manager": "^5.2.3",
     "cache-manager-redis-store": "^3.0.1",

@@ -16,7 +16,7 @@ export class TokenBucket {
   bucketVolume: number;
 
   @Column({ type: 'decimal', precision: 20, scale: 10, unsigned: true })
-  bucketPrice: number;
+  priceReciprocal: number;
 
   @Column({ type: 'bigint', default: 0, unsigned: true })
   transactionCount: number;

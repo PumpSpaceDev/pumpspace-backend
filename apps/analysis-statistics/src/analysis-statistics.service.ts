@@ -8,15 +8,24 @@ import { RedisCacheService, RedisService } from '@app/shared';
 import { RaydiumSwapEvent, SwapDto } from '@app/interfaces';
 import { HeliusApiManager } from '@app/shared';
 import { liquidityStateV4Layout } from '@raydium-io/raydium-sdk-v2';
+import BigNumber from 'bignumber.js';
 
 const RAYDIUM_AUTHORITY_V4 = '5Q544fKrFoe6tsEbD7S8EmxGTJYAKtTVhAW5Q5pge4j1';
 const WSOL_MINT = 'So11111111111111111111111111111111111111112';
 const WSOL_DECIMALS = 9;
-
+enum BucketWindowEnum {
+  FiveMin = '5m',
+  OneHour = '1h',
+  OneDay = '1d',
+}
 @Injectable()
 export class AnalysisStatisticsService implements OnModuleInit {
   private readonly logger = new Logger(AnalysisStatisticsService.name);
-  private readonly bucketWindows = ['5m', '1h', '24h'];
+  private readonly bucketWindows = [
+    BucketWindowEnum.FiveMin,
+    BucketWindowEnum.OneHour,
+    BucketWindowEnum.OneDay,
+  ];
   private persistenceInterval: NodeJS.Timeout;
 
   private readonly PERSISTENCE_INTERVAL = 5 * 60 * 1000; // 5 minutes
@@ -32,9 +41,10 @@ export class AnalysisStatisticsService implements OnModuleInit {
   ) {}
   onModuleInit() {
     this.redisPubSubService.subscribeRaydiumSwap(this.processTransaction);
-    this.startPeriodicPersistence();
+    // this.startPeriodicPersistence();
   }
 
+  //TODO
   private startPeriodicPersistence() {
     this.persistenceInterval = setInterval(async () => {
       try {
@@ -48,13 +58,18 @@ export class AnalysisStatisticsService implements OnModuleInit {
 
           for (const key of keys) {
             const bucket = await this.redisService.hgetall(key);
-            if (bucket && bucket.volume && bucket.price && bucket.lastUpdated) {
+            if (
+              bucket &&
+              bucket.volume &&
+              bucket.priceReciprocal &&
+              bucket.lastUpdated
+            ) {
               const [tokenId] = key.split(':');
               await this.persistBucketIfNeeded(
                 tokenId,
                 key,
                 Number(bucket.volume),
-                Number(bucket.price),
+                Number(bucket.priceReciprocal),
                 new Date(bucket.lastUpdated),
               );
             }
@@ -187,10 +202,12 @@ export class AnalysisStatisticsService implements OnModuleInit {
         this.redisPubSubService.publishSmartMoneyMatches(parsedEvent);
       }
 
+      const tokenAmount = isBuy ? transaction.amountOut : transaction.amountIn;
+      const wSolAmount = isBuy ? transaction.amountIn : transaction.amountOut;
       await this.updateTokenStatistics(
         memeTokenMint,
-        BigInt(transaction.amountIn),
-        BigInt(transaction.amountOut),
+        formatToken(tokenAmount, memeTokenDesimals),
+        formatSol(wSolAmount),
       );
     } catch (error) {
       this.logger.error('Error processing transaction:', error);
@@ -200,7 +217,7 @@ export class AnalysisStatisticsService implements OnModuleInit {
 
   // Buy/sell detection is now handled directly in processTransaction
 
-  async getTokenStats(query: { tokenId: string; window: string }) {
+  async getTokenStats(query: { tokenId: string; window: BucketWindowEnum }) {
     try {
       if (!this.bucketWindows.includes(query.window)) {
         throw new Error(`Invalid window: ${query.window}`);
@@ -227,7 +244,7 @@ export class AnalysisStatisticsService implements OnModuleInit {
         tokenId: bucket.tokenId,
         window: query.window,
         volume: Number(bucket.bucketVolume),
-        price: Number(bucket.bucketPrice),
+        price: Number(bucket.priceReciprocal),
         transactionCount: Number(bucket.transactionCount),
         lastUpdated: bucket.lastUpdated,
       };
@@ -239,12 +256,10 @@ export class AnalysisStatisticsService implements OnModuleInit {
 
   private async updateTokenStatistics(
     tokenId: string,
-    amountIn: bigint,
-    amountOut: bigint,
+    volume: number,
+    solAmount: number,
   ) {
     const now = new Date();
-    const volume = Number(amountIn.toString());
-    const price = Number(amountOut.toString()) / Number(amountIn.toString());
 
     for (const window of this.bucketWindows) {
       const bucketKey = `${tokenId}:${window}:${this.getBucketTimestamp(now, window)}`;
@@ -254,7 +269,9 @@ export class AnalysisStatisticsService implements OnModuleInit {
 
         const updatedBucket = {
           volume: (Number(existingBucket?.volume) || 0) + volume,
-          price: price,
+          // NOTE: here is not the real price, it's the reciprocal of the price
+          // to avoid floating point arithmetic
+          priceReciprocal: (volume / solAmount).toFixed(6),
           transactionCount: (Number(existingBucket?.transactionCount) || 0) + 1,
           lastUpdated: now.toISOString(),
         };
@@ -267,8 +284,8 @@ export class AnalysisStatisticsService implements OnModuleInit {
         );
         await this.redisService.hset(
           bucketKey,
-          'price',
-          updatedBucket.price.toString(),
+          'priceReciprocal',
+          updatedBucket.priceReciprocal,
         );
         await this.redisService.hset(
           bucketKey,
@@ -282,13 +299,13 @@ export class AnalysisStatisticsService implements OnModuleInit {
         );
         await this.redisService.expire(bucketKey, this.getWindowTTL(window));
 
-        await this.persistBucketIfNeeded(
-          tokenId,
-          bucketKey,
-          updatedBucket.volume,
-          updatedBucket.price,
-          now,
-        );
+        // await this.persistBucketIfNeeded(
+        //   tokenId,
+        //   bucketKey,
+        //   updatedBucket.volume,
+        //   updatedBucket.priceReciprocal,
+        //   now,
+        // );
       } catch (error) {
         this.logger.error(
           `Error updating token statistics for ${tokenId}:`,
@@ -302,19 +319,20 @@ export class AnalysisStatisticsService implements OnModuleInit {
     tokenId: string,
     bucketKey: string,
     volume: number,
-    price: number,
+    priceReciprocal: number,
     timestamp: Date,
   ) {
     const bucket = new TokenBucket();
     bucket.tokenId = tokenId;
     bucket.bucketKey = bucketKey;
     bucket.bucketVolume = volume;
-    bucket.bucketPrice = price;
+    bucket.priceReciprocal = priceReciprocal;
     bucket.lastUpdated = timestamp;
 
     await this.tokenBucketRepository.save(bucket);
   }
 
+  //TODO incomplete
   private async isSmartMoneyAddress(address: string): Promise<boolean> {
     const score = await this.redisService.hget(
       `smart-money:${address}`,
@@ -323,14 +341,17 @@ export class AnalysisStatisticsService implements OnModuleInit {
     return score !== null && Number(score) >= 80;
   }
 
-  private getBucketTimestamp(date: Date, window: string): string {
+  //TODO incomplete
+  // 这里理解有误差。比如 5m 的数据是为了计算1h 用的。
+  // 1h 的数据是为了计算 1d 用的。所以过期时间 要根据使用目的来设置
+  private getBucketTimestamp(date: Date, window: BucketWindowEnum): string {
     const timestamp = Math.floor(date.getTime() / 1000);
     switch (window) {
-      case '5m':
+      case BucketWindowEnum.FiveMin:
         return (Math.floor(timestamp / 300) * 300).toString();
-      case '1h':
+      case BucketWindowEnum.OneHour:
         return (Math.floor(timestamp / 3600) * 3600).toString();
-      case '24h':
+      case BucketWindowEnum.OneDay:
         return (Math.floor(timestamp / 86400) * 86400).toString();
       default:
         throw new Error(`Invalid window: ${window}`);
@@ -349,4 +370,13 @@ export class AnalysisStatisticsService implements OnModuleInit {
         throw new Error(`Invalid window: ${window}`);
     }
   }
+}
+
+function formatSol(lamports: bigint): number {
+  return formatToken(lamports, WSOL_DECIMALS);
+}
+function formatToken(lamports: bigint, decimals: number): number {
+  return Number(
+    new BigNumber(lamports.toString()).div(10 ** decimals).toFixed(3),
+  );
 }
