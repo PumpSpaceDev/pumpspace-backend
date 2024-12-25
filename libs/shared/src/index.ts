@@ -4,6 +4,7 @@ export * from './token-stats';
 export * from './metrics';
 export * from './redis';
 export * from './rpc';
+export * from './utils';
 
 import { utilities, WinstonModule } from 'nest-winston';
 import { format, transports, Logform } from 'winston';
