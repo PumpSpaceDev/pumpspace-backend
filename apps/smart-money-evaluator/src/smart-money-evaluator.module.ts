@@ -1,19 +1,35 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { ConfigModule } from '@app/config';
-import { SharedModule } from '@app/shared';
-import { SmartMoneyEvaluatorController } from './smart-money-evaluator.controller';
-import { SmartMoneyEvaluatorService } from './smart-money-evaluator.service';
-import { SmartMoney } from './entities/smart-money.entity';
-import { SmartMoneyScore } from './entities/smart-money-score.entity';
+import { ConfigModule, ConfigService } from '@app/config';
+import { SharedModule, RedisModule } from '@app/shared';
+import { IndicatorService } from './indicator/indicator.service';
+import { IndicatorRepository } from './indicator/repositories/indicator.repository';
+import { ScoreRepository } from './indicator/repositories/score.repository';
+import { TokenService } from './indicator/token/token.service';
+import { Swap } from '@app/shared-swaps';
+import { Indicator } from './indicator/entities/indicator.entity';
+import { Score } from './indicator/entities/score.entity';
 
 @Module({
   imports: [
     ConfigModule,
     SharedModule,
-    TypeOrmModule.forFeature([SmartMoney, SmartMoneyScore]),
+    RedisModule,
+    TypeOrmModule.forFeature([Swap, Indicator, Score]),
+    TypeOrmModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => ({
+        ...configService.databaseConfig,
+        entities: [Swap, Indicator, Score],
+      }),
+    }),
   ],
-  controllers: [SmartMoneyEvaluatorController],
-  providers: [SmartMoneyEvaluatorService],
+  providers: [
+    IndicatorService,
+    IndicatorRepository,
+    ScoreRepository,
+    TokenService,
+  ],
 })
 export class SmartMoneyEvaluatorModule {}
