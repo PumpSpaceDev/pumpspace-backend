@@ -215,14 +215,12 @@ export class AnalysisStatisticsService implements OnModuleInit {
     }
   }
 
-  // Buy/sell detection is now handled directly in processTransaction
-
+  //TODO incomplete
   async getTokenStats(query: { tokenId: string; window: BucketWindowEnum }) {
+    if (!this.bucketWindows.includes(query.window)) {
+      throw new Error(`Invalid window: ${query.window}`);
+    }
     try {
-      if (!this.bucketWindows.includes(query.window)) {
-        throw new Error(`Invalid window: ${query.window}`);
-      }
-
       const bucketKey = `${query.tokenId}:${query.window}`;
 
       const bucket = await this.tokenBucketRepository.findOne({
