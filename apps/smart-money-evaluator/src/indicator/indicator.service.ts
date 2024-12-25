@@ -2,15 +2,16 @@ import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, MoreThanOrEqual } from 'typeorm';
 import { IndicatorData } from './indicatorData';
-import { Indicator } from '../indicator/entities/indicator.entity';
-import { Network } from '../indicator/types/network.enum';
-import { Platform } from '../indicator/types/platform.enum';
+import { Indicator } from './entities/indicator.entity';
+import { Network } from './types/network.enum';
+import { Platform } from './types/platform.enum';
 import { Swap } from '@app/shared-swaps';
-import { IndicatorGraph, IndicatorName } from '../indicator/indicatorGraph';
-import { SOL_DECIMAL } from '../indicator/constants';
-import { IndicatorRepository } from '../indicator/repositories/indicator.repository';
-import { ScoreRepository } from '../indicator/repositories/score.repository';
-import { TokenService } from '../indicator/token/token.service';
+import { IndicatorGraph, IndicatorName } from './indicatorGraph';
+import { SOL_DECIMAL } from './constants';
+import { IndicatorRepository } from './repositories/indicator.repository';
+import { ScoreRepository } from './repositories/score.repository';
+import { TokenService } from './token/token.service';
+import { IndicatorCacheService } from './cache/indicator-cache.service';
 import BigNumber from 'bignumber.js';
 
 const SUPPORT_PLATFORMS = [Platform.Moonshot, Platform.PumpFun];
@@ -41,6 +42,7 @@ export class IndicatorService {
     private readonly indicatorRepository: IndicatorRepository,
     private readonly scoreRepository: ScoreRepository,
     private readonly tokenService: TokenService,
+    private readonly indicatorCacheService: IndicatorCacheService,
   ) {
     IndicatorGraph.initialize();
   }
@@ -174,29 +176,31 @@ export class IndicatorService {
     totalScore: number;
     reason?: string;
   }> {
-    try {
-      let totalScore: number = 0;
-      const indicators = await this.calculateIndicators(account, network);
-      for (const indicator of indicators) {
-        if (indicator.getValue().length === 0) {
-          throw new Error(
-            `Indicator value length = 0 : ${indicator.getName()}`,
+    return this.indicatorCacheService.getScore(account, network, async () => {
+      try {
+        let totalScore: number = 0;
+        const indicators = await this.calculateIndicators(account, network);
+        for (const indicator of indicators) {
+          if (indicator.getValue().length === 0) {
+            throw new Error(
+              `Indicator value length = 0 : ${indicator.getName()}`,
+            );
+          }
+          this.logger.debug(
+            `account: ${account}, ${indicator.getName()} - value: ${
+              indicator.getValue()[0]
+            } score: ${indicator.calculateScore()}`,
           );
+          totalScore += indicator.calculateScore();
         }
-        this.logger.debug(
-          `account: ${account}, ${indicator.getName()} - value: ${
-            indicator.getValue()[0]
-          } score: ${indicator.calculateScore()}`,
-        );
-        totalScore += indicator.calculateScore();
+        this.logger.debug(`account: ${account}, TotalScore: ${totalScore}`);
+        return { indicators, totalScore, reason: '' };
+      } catch (e) {
+        this.logger.error(`ABNORMAL account: ${account}, TotalScore: -1`);
+        this.logger.error(e);
+        return { indicators: [], totalScore: -1, reason: e.message };
       }
-      this.logger.debug(`account: ${account}, TotalScore: ${totalScore}`);
-      return { indicators, totalScore, reason: '' };
-    } catch (e) {
-      this.logger.error(`ABNORMAL account: ${account}, TotalScore: -1`);
-      this.logger.error(e);
-      return { indicators: [], totalScore: -1, reason: e.message };
-    }
+    });
   }
 
   async saveIndicators(
@@ -221,17 +225,19 @@ export class IndicatorService {
   }
 
   private async load30DaysTradeData(account: string): Promise<Swap[]> {
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    return this.indicatorCacheService.getTradeData(account, async () => {
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-    return this.swapRepository.find({
-      where: {
-        signer: account,
-        timestamp: MoreThanOrEqual(thirtyDaysAgo),
-      },
-      order: {
-        timestamp: 'DESC',
-      },
+      return this.swapRepository.find({
+        where: {
+          signer: account,
+          timestamp: MoreThanOrEqual(thirtyDaysAgo),
+        },
+        order: {
+          timestamp: 'DESC',
+        },
+      });
     });
   }
 
@@ -257,7 +263,7 @@ export class IndicatorService {
         if (!acc[token]) {
           acc[token] = [];
         }
-        
+
         acc[token].push({
           token,
           cost: swap.direction === 0 ? BigInt(swap.amountIn) : 0n,
@@ -268,7 +274,7 @@ export class IndicatorService {
           account: swap.signer,
           swapType: swap.direction === 0 ? SwapType.BUY : SwapType.SELL,
         });
-        
+
         return acc;
       },
       {} as Record<string, SwapResult[]>,
