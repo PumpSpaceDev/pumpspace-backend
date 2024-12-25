@@ -9,12 +9,14 @@ import { TokenService } from './indicator/token/token.service';
 import { Swap } from '@app/shared-swaps';
 import { Indicator } from './indicator/entities/indicator.entity';
 import { Score } from './indicator/entities/score.entity';
+import { DataCollectorModule } from '@pumpspace/data-collector';
 
 @Module({
   imports: [
     ConfigModule,
     SharedModule,
     RedisModule,
+    DataCollectorModule,
     TypeOrmModule.forFeature([Swap, Indicator, Score]),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],

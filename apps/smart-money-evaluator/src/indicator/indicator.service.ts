@@ -1,4 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository, MoreThanOrEqual } from 'typeorm';
 import { IndicatorData } from './indicatorData';
 import { Indicator } from '../indicator/entities/indicator.entity';
 import { Network } from '../indicator/types/network.enum';
@@ -34,6 +36,8 @@ export class IndicatorService {
   private readonly logger: Logger = new Logger(IndicatorService.name);
 
   constructor(
+    @InjectRepository(Swap)
+    private readonly swapRepository: Repository<Swap>,
     private readonly indicatorRepository: IndicatorRepository,
     private readonly scoreRepository: ScoreRepository,
     private readonly tokenService: TokenService,
@@ -50,7 +54,7 @@ export class IndicatorService {
     const indicators: { [key in IndicatorName]: IndicatorData } =
       IndicatorGraph.initIndicators();
 
-    const TradeData30Days = await this.load30DaysTradeData();
+    const TradeData30Days = await this.load30DaysTradeData(account);
     if (TradeData30Days.length > 3000) {
       throw new Error('TradeData30Days.length > 3000');
     }
@@ -216,10 +220,19 @@ export class IndicatorService {
     });
   }
 
-  private async load30DaysTradeData(): Promise<Swap[]> {
-    // TODO: Implement using TypeORM repository for Swap entity
-    // This will be implemented in the next step when integrating with Data Collector
-    return [];
+  private async load30DaysTradeData(account: string): Promise<Swap[]> {
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+    return this.swapRepository.find({
+      where: {
+        signer: account,
+        timestamp: MoreThanOrEqual(thirtyDaysAgo),
+      },
+      order: {
+        timestamp: 'DESC',
+      },
+    });
   }
 
   private filterLast7DaysTradeData(arr: Swap[]): Swap[] {
@@ -239,9 +252,23 @@ export class IndicatorService {
     }
 
     const result = swaps.reduce(
-      (acc) => {
-        // TODO: Implement token mapping logic based on direction
-        // This will be implemented in the next step when integrating with Data Collector
+      (acc, swap) => {
+        const token = swap.amm;
+        if (!acc[token]) {
+          acc[token] = [];
+        }
+        
+        acc[token].push({
+          token,
+          cost: swap.direction === 0 ? BigInt(swap.amountIn) : 0n,
+          profit: swap.direction === 1 ? BigInt(swap.amountOut) : 0n,
+          tokenBuyAmount: swap.direction === 0 ? BigInt(swap.amountOut) : 0n,
+          tokenSellAmount: swap.direction === 1 ? BigInt(swap.amountIn) : 0n,
+          decimal: SOL_DECIMAL,
+          account: swap.signer,
+          swapType: swap.direction === 0 ? SwapType.BUY : SwapType.SELL,
+        });
+        
         return acc;
       },
       {} as Record<string, SwapResult[]>,
