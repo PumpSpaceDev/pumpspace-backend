@@ -5,7 +5,7 @@ import { SharedModule, RedisModule } from '@app/shared';
 import { DataCollectorService } from './data-collector.service';
 import { RaydiumGrpcListenerService } from './grpc/raydium-grpc-listener.service';
 import { RaydiumParserService } from './parser/raydium-parser.service';
-import { Swap } from './entities/swap.entity';
+import { Swap } from '@app/shared-swaps';
 
 @Module({
   imports: [

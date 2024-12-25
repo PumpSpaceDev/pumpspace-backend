@@ -3,11 +3,13 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { TokenBucket } from './entities/token-bucket.entity';
 import { ConfigService } from '@app/config';
-import { RedisPubSubService } from '@app/shared';
-import { RedisService } from '@app/shared/redis';
-import { SolanaRpcService } from '@app/shared/services/solana-rpc.service';
-import { SwapDto } from '@app/interfaces';
+import { bnLayoutFormatter, RedisPubSubService } from '@app/shared';
+import { RedisCacheService, RedisService } from '@app/shared';
+import { RaydiumSwapEvent, SwapDto } from '@app/interfaces';
+import { HeliusApiManager } from '@app/shared';
+import { liquidityStateV4Layout } from '@raydium-io/raydium-sdk-v2';
 
+const RAYDIUM_AUTHORITY_V4 = '5Q544fKrFoe6tsEbD7S8EmxGTJYAKtTVhAW5Q5pge4j1';
 const WSOL_MINT = 'So11111111111111111111111111111111111111112';
 const WSOL_DECIMALS = 9;
 
@@ -25,7 +27,8 @@ export class AnalysisStatisticsService implements OnModuleInit {
     private readonly configService: ConfigService,
     private readonly redisPubSubService: RedisPubSubService,
     private readonly redisService: RedisService,
-    private readonly solanaRpcService: SolanaRpcService,
+    private readonly redisCacheService: RedisCacheService,
+    private readonly heliusApiManager: HeliusApiManager,
   ) {}
   onModuleInit() {
     this.redisPubSubService.subscribeRaydiumSwap(this.processTransaction);
@@ -86,25 +89,57 @@ export class AnalysisStatisticsService implements OnModuleInit {
         return;
       }
 
-      const ammAccount = transaction.amm;
-      let poolInfo = JSON.parse(
-        (await this.redisService.hget(`amm:${ammAccount}`, 'data')) || 'null',
+      const poolInfo = await this.redisCacheService.getPoolInfo(
+        transaction.amm,
+        async (amm) => {
+          const accountInfoResult = await this.heliusApiManager.getAccountInfo(
+            amm,
+            {
+              getIdentifier: () => amm,
+              callback: (identifier: string, count: number) => {
+                this.logger.error(
+                  `Request limit exceeded for ${identifier}. Total: ${count}`,
+                );
+                throw new Error(`Request limit exceeded for ${identifier}`);
+              },
+              getMaxExecutions: () => 5,
+            },
+            {
+              retries: 3,
+              timeout: 10000,
+            },
+          );
+          const data = accountInfoResult?.value?.data?.at(0);
+          if (!data) {
+            this.logger.error(`AMM Pool ${amm} not found.`);
+            throw new Error(`AMM Pool ${amm} not found.`);
+          }
+          const ammData = liquidityStateV4Layout.decode(Buffer.from(data));
+          bnLayoutFormatter(ammData);
+          return {
+            baseMint: ammData.baseMint.toString(),
+            quoteMint: ammData.quoteMint.toString(),
+            baseVault: ammData.baseVault.toString(),
+            quoteVault: ammData.quoteVault.toString(),
+            baseReserve: 0,
+            quoteReserve: 0,
+          };
+        },
       );
 
       if (!poolInfo) {
-        const response =
-          await this.solanaRpcService.getAmmAccountInfo(ammAccount);
-        if (!response || !response.data) {
-          this.logger.error(`AMM Pool ${ammAccount} not found.`);
-          return;
-        }
-        poolInfo = this.parseAmmData(response);
-        await this.redisService.hset(
-          `amm:${ammAccount}`,
-          'data',
-          JSON.stringify(poolInfo),
+        this.logger.error('Pool info not found:', transaction.amm);
+        return;
+      }
+
+      // only handle WSOL pairs
+      // only for Raydium
+      // pumpfun pool is not supported, because the base token of pumpfun pool is SOL
+      if (poolInfo.baseMint !== WSOL_MINT && poolInfo.quoteMint !== WSOL_MINT) {
+        this.logger.error(
+          `niether baseMint nor quoteMint is WSOL, amm: ${transaction.amm}`,
         );
-        await this.redisService.expire(`amm:${ammAccount}`, 86400); // Cache for 1 day
+        return;
       }
 
       const memeTokenMint =
@@ -119,65 +154,47 @@ export class AnalysisStatisticsService implements OnModuleInit {
         isBuy = transaction.direction === 1;
       }
 
-      const parsedEvent = {
+      const memeTokenDesimals = transaction.postTokenBalances.find(
+        (balance) => balance.mint === memeTokenMint,
+      ).uiTokenAmount.decimals;
+      const baseVaultPostBalance = transaction.postTokenBalances.find(
+        (balance) =>
+          balance.mint === poolInfo.baseMint &&
+          balance.owner === RAYDIUM_AUTHORITY_V4,
+      ).uiTokenAmount.amount;
+      const quoteVaultPostBalance = transaction.postTokenBalances.find(
+        (balance) =>
+          balance.mint === poolInfo.quoteMint &&
+          balance.owner === RAYDIUM_AUTHORITY_V4,
+      ).uiTokenAmount.amount;
+
+      const parsedEvent: RaydiumSwapEvent = {
         signature: transaction.signature,
-        timestamp: new Date().toISOString(),
-        amm: ammAccount,
+        timestamp: transaction.timestamp.toISOString(),
+        amm: transaction.amm,
         user: transaction.signer,
         isBuy,
         tokenIn: isBuy ? WSOL_MINT : memeTokenMint,
         tokenOut: isBuy ? memeTokenMint : WSOL_MINT,
-        tokenInDecimals: isBuy
-          ? WSOL_DECIMALS
-          : (transaction.tokenInDecimals ?? 9),
-        tokenOutDecimals: isBuy
-          ? (transaction.tokenOutDecimals ?? 9)
-          : WSOL_DECIMALS,
+        tokenInDecimals: isBuy ? WSOL_DECIMALS : (memeTokenDesimals ?? 6),
+        tokenOutDecimals: isBuy ? (memeTokenDesimals ?? 6) : WSOL_DECIMALS,
         tokenInAmount: transaction.amountIn.toString(),
         tokenOutAmount: transaction.amountOut.toString(),
-        pool: {
-          address: ammAccount,
-          baseToken: poolInfo.baseMint,
-          quoteToken: poolInfo.quoteMint,
-          baseReserve: poolInfo.baseReserve?.toString() || '0',
-          quoteReserve: poolInfo.quoteReserve?.toString() || '0',
-        },
+        baseVaultPostBalance: baseVaultPostBalance,
+        quoteVaultPostBalance: quoteVaultPostBalance,
       };
-
-      await this.redisPubSubService.publishSmartMoneyMatches(parsedEvent);
-      this.logger.log(`Published parsed event: ${JSON.stringify(parsedEvent)}`);
+      if (await this.isSmartMoneyAddress(transaction.signer)) {
+        this.redisPubSubService.publishSmartMoneyMatches(parsedEvent);
+      }
 
       await this.updateTokenStatistics(
         memeTokenMint,
         BigInt(transaction.amountIn),
         BigInt(transaction.amountOut),
       );
-
-      if (await this.isSmartMoneyAddress(transaction.signer)) {
-        await this.publishSmartMoneyMatch(parsedEvent);
-      }
     } catch (error) {
       this.logger.error('Error processing transaction:', error);
       this.logger.error('Transaction data:', transaction);
-    }
-  }
-
-  private parseAmmData(accountInfo: any) {
-    try {
-      const ammData = accountInfo.data;
-      return {
-        baseVault: ammData.baseVault.toString(),
-        quoteVault: ammData.quoteVault.toString(),
-        baseMint: ammData.baseMint.toString(),
-        quoteMint: ammData.quoteMint.toString(),
-        baseReserve: ammData.baseReserve,
-        quoteReserve: ammData.quoteReserve,
-        lastUpdateTime: new Date().toISOString(),
-      };
-    } catch (error) {
-      this.logger.error('Error parsing AMM data:', error);
-      this.logger.error('Account info:', accountInfo);
-      return null;
     }
   }
 
@@ -304,14 +321,6 @@ export class AnalysisStatisticsService implements OnModuleInit {
       'score',
     );
     return score !== null && Number(score) >= 80;
-  }
-
-  private async publishSmartMoneyMatch(transaction: any) {
-    await this.redisPubSubService.publishSmartMoneyMatches({
-      address: transaction.signer,
-      transaction: transaction,
-      timestamp: new Date().toISOString(),
-    });
   }
 
   private getBucketTimestamp(date: Date, window: string): string {

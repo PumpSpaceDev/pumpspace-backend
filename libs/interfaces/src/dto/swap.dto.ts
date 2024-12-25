@@ -8,6 +8,7 @@ import {
   IsInt,
 } from 'class-validator';
 import { Transform, Type } from 'class-transformer';
+import { TokenBalance } from '@solana/web3.js';
 
 // Custom decorator for bigint validation
 function IsBigInt() {
@@ -22,18 +23,15 @@ function IsBigInt() {
 
 export class SwapDto {
   @IsString()
-  @Length(88, 88)
   signature: string;
 
   @Type(() => Date)
   timestamp: Date;
 
   @IsString()
-  @Length(44, 44)
   signer: string;
 
   @IsString()
-  @Length(44, 44)
   amm: string;
 
   @IsInt()
@@ -47,23 +45,7 @@ export class SwapDto {
   @IsString()
   amountOut: bigint;
 
-  @IsString()
-  @Length(44, 44)
-  @IsOptional()
-  tokenIn?: string;
-
-  @IsString()
-  @Length(44, 44)
-  @IsOptional()
-  tokenOut?: string;
-
-  @IsNumber()
-  @IsOptional()
-  tokenInDecimals?: number;
-
-  @IsNumber()
-  @IsOptional()
-  tokenOutDecimals?: number;
+  postTokenBalances?: Array<TokenBalance> | null;
 }
 
 export class SwapFilterDto {

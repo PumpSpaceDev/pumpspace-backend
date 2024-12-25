@@ -193,9 +193,21 @@ export class ConfigService {
     };
   }
 
-  get solanaConfig() {
+  /**
+   * Returns the configuration for the Helius RPC service
+   * @returns {apiKey:string, baseUrl:string} - The Helius RPC service configuration
+   * @memberof ConfigService
+   * @public
+   * @readonly
+   * @example
+   * const config = configService.heliusConfig;
+   * const rpcUrl = `${config.baseUrl}${config.apiKey}`;
+   *
+   */
+  get heliusConfig() {
     return {
-      rpcUrl: this.getRequiredConfig<string>('SOLANA_RPC_URL'),
+      apiKey: this.getRequiredConfig<string>('HELIUS_API_KEY'),
+      baseUrl: 'https://mainnet.helius-rpc.com/?api-key=',
     };
   }
 }

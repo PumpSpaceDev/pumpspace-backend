@@ -1,15 +1,14 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { LoggerService } from '@app/shared';
 import { Swap } from './entities';
 
 @Injectable()
 export class SwapsQueryService {
+  private readonly logger = new Logger(SwapsQueryService.name);
   constructor(
     @InjectRepository(Swap)
     private readonly swapsRepository: Repository<Swap>,
-    private readonly logger: LoggerService,
   ) {}
 
   private getTableName(date: Date): string {

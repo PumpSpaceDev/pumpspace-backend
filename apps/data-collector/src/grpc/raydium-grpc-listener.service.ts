@@ -5,12 +5,12 @@ import {
   OnModuleInit,
 } from '@nestjs/common';
 import { ConfigService } from '@app/config';
-import { RedisService } from '@app/shared';
 import Client, { CommitmentLevel } from '@triton-one/yellowstone-grpc';
 import { RaydiumParserService } from '../parser/raydium-parser.service';
 import { TransactionFormatter } from '../utils/transaction-formatter';
 import { BnLayoutFormatter } from '../utils/bn-layout-formatter';
 import { DataCollectorService } from '../data-collector.service';
+import { SwapDto } from '@app/interfaces';
 
 @Injectable()
 export class RaydiumGrpcListenerService
@@ -24,7 +24,6 @@ export class RaydiumGrpcListenerService
     private readonly configService: ConfigService,
     private readonly parserService: RaydiumParserService,
     private readonly dataCollectorService: DataCollectorService,
-    private readonly redisService: RedisService,
   ) {
     //TODO move to analysis-statistics module
     this.TXN_FORMATTER = new TransactionFormatter();
@@ -143,33 +142,16 @@ export class RaydiumGrpcListenerService
             swapEvent.name === 'swapBaseIn'
               ? swapEvent.data.outAmount
               : swapEvent.data.amountOut;
-
-          const poolInfo = await this.redisService.hget('amm', ammAccount);
-          if (!poolInfo) {
-            this.logger.warn(`Pool info not found for AMM ${ammAccount}`);
-            await this.dataCollectorService.saveSwap({
-              signature,
-              timestamp: new Date(txn.blockTime),
-              signer,
-              amm: ammAccount,
-              direction: swapEvent.data.direction,
-              amountIn,
-              amountOut,
-            });
-          } else {
-            const poolData = JSON.parse(poolInfo);
-            await this.dataCollectorService.saveSwap({
-              signature,
-              timestamp: new Date(txn.blockTime),
-              signer,
-              amm: ammAccount,
-              direction: swapEvent.data.direction,
-              amountIn,
-              amountOut,
-              tokenIn: poolData.baseMint,
-              tokenOut: poolData.quoteMint,
-            });
-          }
+          this.dataCollectorService.saveSwap({
+            signature,
+            timestamp: new Date(txn.blockTime),
+            signer,
+            amm: ammAccount,
+            direction: swapEvent.data.direction,
+            amountIn,
+            amountOut,
+            postTokenBalances: txn.meta.postTokenBalances,
+          } as SwapDto);
         }
       }
     });

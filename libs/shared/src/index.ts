@@ -3,7 +3,7 @@ export * from './shared.service';
 export * from './token-stats';
 export * from './metrics';
 export * from './redis';
-export * from './services/solana-rpc.service';
+export * from './rpc';
 
 import { utilities, WinstonModule } from 'nest-winston';
 import { format, transports, Logform } from 'winston';

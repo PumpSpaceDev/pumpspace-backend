@@ -79,10 +79,10 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
         error.message,
         'RedisService',
       );
-      throw error;
     }
   }
 
+  //TODO should be able to handle errors and retry
   async subscribe(
     channel: string,
     callback: (channel: string, message: string) => void,
@@ -159,6 +159,42 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
     } catch (error) {
       this.logger.error(
         `Failed to set expiry for key: ${key}`,
+        error.message,
+        'RedisService',
+      );
+      throw error;
+    }
+  }
+
+  async get(key: string) {
+    try {
+      return await this.publisher.get(key);
+    } catch (error) {
+      this.logger.error(
+        `Failed to get value for key: ${key}`,
+        error.message,
+        'RedisService',
+      );
+      throw error;
+    }
+  }
+
+  /**
+   *
+   * @param key key to set
+   * @param value value to set
+   * @param ttl time to live in seconds
+   * @returns
+   */
+  async set(key: string, value: string | number, ttl?: number) {
+    try {
+      if (ttl) {
+        return await this.publisher.set(key, value.toString(), 'EX', ttl);
+      }
+      return await this.publisher.set(key, value.toString());
+    } catch (error) {
+      this.logger.error(
+        `Failed to set value for key: ${key}`,
         error.message,
         'RedisService',
       );

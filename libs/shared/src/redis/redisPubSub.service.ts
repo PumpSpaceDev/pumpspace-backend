@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@app/config';
-import { SwapDto } from '@app/interfaces';
+import { RaydiumSwapEvent, SwapDto } from '@app/interfaces';
 import { RedisService } from './redis.service';
 
 const RAYDIUM_SWAPS_CHANNEL = 'raydium:swaps';
@@ -33,10 +33,25 @@ export class RedisPubSubService {
     );
   }
 
-  async publishSmartMoneyMatches(event: any): Promise<void> {
+  async publishSmartMoneyMatches(event: RaydiumSwapEvent): Promise<void> {
     await this.redisService.publish(
       SMART_MONEY_MATCHES_CHANNEL,
       JSON.stringify(event),
+    );
+  }
+
+  async subscribeSmartMoneyMatches(
+    callback: (event: RaydiumSwapEvent) => void,
+  ): Promise<void> {
+    await this.redisService.subscribe(
+      SMART_MONEY_MATCHES_CHANNEL,
+      (channel, message) => {
+        if (channel !== SMART_MONEY_MATCHES_CHANNEL) {
+          return;
+        }
+        const event = JSON.parse(message);
+        callback(event);
+      },
     );
   }
 }
