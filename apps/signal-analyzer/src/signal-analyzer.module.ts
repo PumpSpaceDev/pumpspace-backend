@@ -5,6 +5,7 @@ import { SharedModule } from '@app/shared';
 import { SignalAnalyzerController } from './signal-analyzer.controller';
 import { SignalAnalyzerService } from './signal-analyzer.service';
 import { SignalEvaluation } from './entities/signal-evaluation.entity';
+import { SignalEvaluationRepository } from './repositories';
 
 @Module({
   imports: [
@@ -13,6 +14,6 @@ import { SignalEvaluation } from './entities/signal-evaluation.entity';
     TypeOrmModule.forFeature([SignalEvaluation]),
   ],
   controllers: [SignalAnalyzerController],
-  providers: [SignalAnalyzerService],
+  providers: [SignalAnalyzerService, SignalEvaluationRepository],
 })
 export class SignalAnalyzerModule {}
