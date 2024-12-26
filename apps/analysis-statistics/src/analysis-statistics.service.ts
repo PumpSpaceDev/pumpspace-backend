@@ -13,7 +13,7 @@ import BigNumber from 'bignumber.js';
 const RAYDIUM_AUTHORITY_V4 = '5Q544fKrFoe6tsEbD7S8EmxGTJYAKtTVhAW5Q5pge4j1';
 const WSOL_MINT = 'So11111111111111111111111111111111111111112';
 const WSOL_DECIMALS = 9;
-enum BucketWindowEnum {
+export enum BucketWindowEnum {
   FiveMin = '5m',
   OneHour = '1h',
   OneDay = '1d',

@@ -4,14 +4,16 @@ import {
   IsDateString,
   Min,
   IsOptional,
+  IsEnum,
 } from 'class-validator';
+import { BucketWindowEnum } from '../analysis-statistics.service';
 
 export class TokenStatisticsDto {
   @IsString()
   tokenId: string;
 
-  @IsString()
-  window: string;
+  @IsEnum(BucketWindowEnum)
+  window: BucketWindowEnum;
 
   @IsNumber()
   @Min(0)
