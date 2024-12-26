@@ -41,6 +41,12 @@
       ],
       "@app/shared-swaps/*": [
         "libs/shared-swaps/src/*"
+      ],
+      "@pumpspace/data-collector": [
+        "apps/data-collector/src"
+      ],
+      "@pumpspace/data-collector/*": [
+        "apps/data-collector/src/*"
       ]
     }
   }

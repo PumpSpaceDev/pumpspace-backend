@@ -39,7 +39,9 @@ export class IndicatorCacheService {
       await this.redisService.expire(key, TRADE_DATA_TTL);
       return JSON.parse(cachedData);
     } catch (e) {
-      this.logger.error(`Error fetching trade data for ${account}: ${e.message}`);
+      this.logger.error(
+        `Error fetching trade data for ${account}: ${e.message}`,
+      );
       return fetchFunction();
     }
   }
@@ -62,11 +64,7 @@ export class IndicatorCacheService {
       const cachedData = await this.redisService.get(key);
       if (!cachedData) {
         const newData = await fetchFunction();
-        await this.redisService.set(
-          key,
-          JSON.stringify(newData),
-          SCORE_TTL,
-        );
+        await this.redisService.set(key, JSON.stringify(newData), SCORE_TTL);
         return newData;
       }
 
