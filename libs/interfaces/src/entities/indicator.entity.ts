@@ -1,5 +1,5 @@
 import { Entity, Column, PrimaryColumn } from 'typeorm';
-import { IndicatorName } from '@app/interfaces';
+import { IndicatorName } from '../enums/indicator-name.enum';
 
 @Entity('indicator')
 export class Indicator {

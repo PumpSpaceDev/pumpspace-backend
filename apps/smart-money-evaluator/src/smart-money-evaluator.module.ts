@@ -7,10 +7,9 @@ import { IndicatorRepository } from './indicator/repositories/indicator.reposito
 import { ScoreRepository } from './indicator/repositories/score.repository';
 import { TokenService } from './indicator/token/token.service';
 import { Swap } from '@app/shared-swaps';
-import { Indicator } from './indicator/entities/indicator.entity';
-import { Score } from './indicator/entities/score.entity';
+import { Indicator, Score } from '@app/interfaces/entities';
 import { DataCollectorModule } from '@pumpspace/data-collector';
-import { IndicatorCacheService } from './indicator/cache/indicator-cache.service';
+import { SmartMoneyCacheService } from './indicator/cache/indicator-cache.service';
 
 @Module({
   imports: [
@@ -33,7 +32,7 @@ import { IndicatorCacheService } from './indicator/cache/indicator-cache.service
     IndicatorRepository,
     ScoreRepository,
     TokenService,
-    IndicatorCacheService,
+    SmartMoneyCacheService,
   ],
 })
 export class SmartMoneyEvaluatorModule {}

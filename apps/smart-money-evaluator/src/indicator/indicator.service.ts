@@ -2,16 +2,15 @@ import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, MoreThanOrEqual } from 'typeorm';
 import { IndicatorData } from './indicatorData';
-import { Indicator } from './entities/indicator.entity';
-import { Network } from './types/network.enum';
-import { Platform } from './types/platform.enum';
+import { Indicator } from '@app/interfaces/entities/indicator.entity';
+import { Network, Platform, IndicatorName } from '@app/interfaces';
 import { Swap } from '@app/shared-swaps';
-import { IndicatorGraph, IndicatorName } from './indicatorGraph';
+import { IndicatorGraph } from './indicatorGraph';
 import { SOL_DECIMAL } from './constants';
 import { IndicatorRepository } from './repositories/indicator.repository';
 import { ScoreRepository } from './repositories/score.repository';
 import { TokenService } from './token/token.service';
-import { IndicatorCacheService } from './cache/indicator-cache.service';
+import { SmartMoneyCacheService } from './cache/indicator-cache.service';
 import BigNumber from 'bignumber.js';
 
 const SUPPORT_PLATFORMS = [Platform.Moonshot, Platform.PumpFun];
@@ -42,7 +41,7 @@ export class IndicatorService {
     private readonly indicatorRepository: IndicatorRepository,
     private readonly scoreRepository: ScoreRepository,
     private readonly tokenService: TokenService,
-    private readonly indicatorCacheService: IndicatorCacheService,
+    private readonly indicatorCacheService: SmartMoneyCacheService,
   ) {
     IndicatorGraph.initialize();
   }

@@ -1,4 +1,5 @@
-import { IndicatorGraph, IndicatorName } from './indicatorGraph';
+import { IndicatorName } from '@app/interfaces';
+import { IndicatorGraph } from './indicatorGraph';
 
 export class IndicatorData {
   private name: IndicatorName;
