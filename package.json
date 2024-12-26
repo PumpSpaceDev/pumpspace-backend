@@ -63,6 +63,7 @@
     "@nestjs/mapped-types": "^2.0.6",
     "@nestjs/microservices": "^10.4.15",
     "@nestjs/platform-express": "^10.0.0",
+    "@nestjs/schedule": "^4.1.2",
     "@nestjs/swagger": "^8.1.0",
     "@nestjs/terminus": "^10.2.3",
     "@nestjs/typeorm": "^10.0.2",
@@ -91,6 +92,7 @@
     "reflect-metadata": "^0.2.0",
     "rxjs": "^7.8.1",
     "swagger-ui-express": "^5.0.1",
+    "telegram": "^2.26.12",
     "typeorm": "^0.3.20",
     "uuid": "^11.0.3",
     "winston": "^3.17.0"
