@@ -3,8 +3,7 @@ import { config } from 'dotenv';
 import { join } from 'path';
 import { SmartMoney } from '../../apps/smart-money-evaluator/src/entities/smart-money.entity';
 import { Score } from '../../apps/smart-money-evaluator/src/entities/score.entity';
-import { Signal } from '../../apps/signal-recorder/src/entities/signal.entity';
-import { SignalEvaluation } from '../../apps/signal-analyzer/src/entities/signal-evaluation.entity';
+import { Signal, SignalEvaluation } from '@app/shared/entities';
 import { TokenBucket } from '../../apps/analysis-statistics/src/entities/token-bucket.entity';
 import { Swap } from '@app/shared-swaps';
 
