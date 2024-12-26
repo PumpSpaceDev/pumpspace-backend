@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Signal } from './entities/signal.entity';
+import { Signal } from '@app/shared/entities';
 import { CreateSignalDto, UpdateSignalDto } from '@app/interfaces';
 import { PaginationDto } from './dto/pagination.dto';
 

@@ -11,7 +11,7 @@ import {
 } from '@nestjs/common';
 import { SignalRecorderService } from './signal-recorder.service';
 import { CreateSignalDto, UpdateSignalDto } from '@app/interfaces';
-import { Signal } from './entities/signal.entity';
+import { Signal } from '@app/shared/entities';
 import { PaginationDto } from './dto/pagination.dto';
 import {
   ApiTags,

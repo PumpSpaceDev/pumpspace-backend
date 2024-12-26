@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { DataSource, Repository } from 'typeorm';
-import { SignalEvaluation } from '../entities/signal-evaluation.entity';
-import { EvaluationStatus } from '../dto/update-evaluation.dto';
+import { SignalEvaluation } from '@app/shared/entities';
+import { EvaluationStatus } from '@app/interfaces/enums/evaluation-status.enum';
 
 @Injectable()
 export class SignalEvaluationRepository extends Repository<SignalEvaluation> {
