@@ -6,16 +6,15 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Logger } from '@nestjs/common';
-import { SignalEvaluation } from './entities/signal-evaluation.entity';
+import { SignalEvaluation, Signal } from '@app/shared/entities';
 import {
   UpdateEvaluationDto,
   EvaluationStatus,
 } from './dto/update-evaluation.dto';
 import { PaginationDto } from './dto/pagination.dto';
 import { CreateEvaluationDto } from './dto/create-evaluation.dto';
-import { SignalRepository } from '@app/signal-recorder/repositories';
+import { SignalRepository } from '@app/shared/repositories';
 import { AmmPoolService } from '@app/shared/amm-pool';
-import { Signal } from '@app/signal-recorder/entities/signal.entity';
 import { AmmPoolState } from '@app/interfaces/types/amm-pool-state.type';
 
 @Injectable()

@@ -7,35 +7,53 @@ import {
 import { ConfigService } from '@app/config';
 import Redis, { RedisOptions } from 'ioredis';
 
+const POOL_SIZE = 5;
+const HEALTH_CHECK_INTERVAL = 30000; // 30 seconds
+const MAX_BACKOFF = 10000; // 10 seconds
+const CIRCUIT_BREAKER_THRESHOLD = 5;
+const CIRCUIT_BREAKER_RESET_TIMEOUT = 30000; // 30 seconds
+
 @Injectable()
 export class RedisService implements OnModuleInit, OnModuleDestroy {
   private publisher: Redis;
   private subscriber: Redis;
+  private connectionPool: Redis[] = [];
+  private currentPoolIndex = 0;
+  private failureCount = 0;
+  private circuitOpen = false;
+  private lastCircuitBreak: number | null = null;
   private readonly logger: Logger = new Logger(RedisService.name);
+
   constructor(private configService: ConfigService) {
     const options: RedisOptions = {
       ...this.configService.redisConfig,
       retryStrategy: (times: number) => {
-        const delay = Math.min(times * 50, 2000);
+        const delay = Math.min(Math.pow(2, times) * 100, MAX_BACKOFF);
         return delay;
       },
       maxRetriesPerRequest: 3,
       enableReadyCheck: true,
       reconnectOnError: (err) => {
-        this.logger.error(
-          'Redis connection error',
-          err.message,
-          'RedisService',
-        );
+        this.handleConnectionError(err);
         return true;
       },
     };
+
+    // Initialize connection pool
+    for (let i = 0; i < POOL_SIZE; i++) {
+      const client = new Redis(options);
+      this.setupErrorHandling(client, `Pool-${i}`);
+      this.connectionPool.push(client);
+    }
 
     this.publisher = new Redis(options);
     this.subscriber = new Redis(options);
 
     this.setupErrorHandling(this.publisher, 'Publisher');
     this.setupErrorHandling(this.subscriber, 'Subscriber');
+
+    // Start health checks
+    this.startHealthChecks();
   }
 
   private setupErrorHandling(client: Redis, type: string) {
@@ -58,8 +76,57 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
   }
 
   async onModuleDestroy() {
-    await this.publisher.quit();
-    await this.subscriber.quit();
+    await Promise.all([
+      this.publisher.quit(),
+      this.subscriber.quit(),
+      ...this.connectionPool.map((client) => client.quit()),
+    ]);
+  }
+
+  private handleConnectionError(err: Error) {
+    this.failureCount++;
+    this.logger.error('Redis connection error', err.message, 'RedisService');
+
+    if (this.failureCount >= CIRCUIT_BREAKER_THRESHOLD) {
+      this.circuitOpen = true;
+      this.lastCircuitBreak = Date.now();
+      this.logger.warn('Circuit breaker opened', 'RedisService');
+    }
+  }
+
+  private async startHealthChecks() {
+    setInterval(async () => {
+      try {
+        // Check circuit breaker status
+        if (
+          this.circuitOpen &&
+          this.lastCircuitBreak &&
+          Date.now() - this.lastCircuitBreak > CIRCUIT_BREAKER_RESET_TIMEOUT
+        ) {
+          this.circuitOpen = false;
+          this.failureCount = 0;
+          this.logger.log('Circuit breaker reset', 'RedisService');
+        }
+
+        // Health check all connections
+        await Promise.all([
+          this.publisher.ping(),
+          this.subscriber.ping(),
+          ...this.connectionPool.map((client) => client.ping()),
+        ]);
+
+        if (this.failureCount > 0) {
+          this.failureCount = 0;
+        }
+      } catch (error) {
+        this.handleConnectionError(error);
+      }
+    }, HEALTH_CHECK_INTERVAL);
+  }
+
+  private getNextPoolClient(): Redis {
+    this.currentPoolIndex = (this.currentPoolIndex + 1) % POOL_SIZE;
+    return this.connectionPool[this.currentPoolIndex];
   }
 
   getPublisher(): Redis {
@@ -167,8 +234,12 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
   }
 
   async get(key: string) {
+    if (this.circuitOpen) {
+      throw new Error('Circuit breaker is open');
+    }
+
     try {
-      return await this.publisher.get(key);
+      return await this.getNextPoolClient().get(key);
     } catch (error) {
       this.logger.error(
         `Failed to get value for key: ${key}`,
@@ -187,11 +258,20 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
    * @returns
    */
   async set(key: string, value: string | number, ttl?: number) {
+    if (this.circuitOpen) {
+      throw new Error('Circuit breaker is open');
+    }
+
     try {
       if (ttl) {
-        return await this.publisher.set(key, value.toString(), 'EX', ttl);
+        return await this.getNextPoolClient().set(
+          key,
+          value.toString(),
+          'EX',
+          ttl,
+        );
       }
-      return await this.publisher.set(key, value.toString());
+      return await this.getNextPoolClient().set(key, value.toString());
     } catch (error) {
       this.logger.error(
         `Failed to set value for key: ${key}`,

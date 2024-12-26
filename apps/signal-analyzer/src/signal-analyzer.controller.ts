@@ -7,7 +7,7 @@ import {
   ApiBody,
 } from '@nestjs/swagger';
 import { SignalAnalyzerService } from './signal-analyzer.service';
-import { SignalEvaluation } from './entities/signal-evaluation.entity';
+import { SignalEvaluation } from '@app/shared/entities';
 import { CreateEvaluationDto } from './dto/create-evaluation.dto';
 import { UpdateEvaluationDto } from './dto/update-evaluation.dto';
 import { PaginationDto } from './dto/pagination.dto';

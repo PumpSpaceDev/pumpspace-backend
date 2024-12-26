@@ -24,6 +24,9 @@
       "@app/shared/*": [
         "libs/shared/src/*"
       ],
+      "@app/shared/entities": [
+        "libs/shared/entities"
+      ],
       "@app/interfaces": [
         "libs/interfaces/src"
       ],
@@ -54,8 +57,8 @@
       "@app/signal-recorder/*": [
         "apps/signal-recorder/src/*"
       ],
-      "@app/signal-recorder/repositories": [
-        "apps/signal-recorder/src/repositories"
+      "@app/shared/repositories": [
+        "libs/shared/src/repositories"
       ]
     }
   }

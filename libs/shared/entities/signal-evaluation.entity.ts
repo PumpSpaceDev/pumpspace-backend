@@ -1,5 +1,5 @@
 import { Entity, PrimaryGeneratedColumn, Column, Index } from 'typeorm';
-import { EvaluationStatus } from '../dto/update-evaluation.dto';
+import { EvaluationStatus } from '@app/interfaces/enums/evaluation-status.enum';
 
 @Entity('signal_evaluation')
 @Index(['signalUniqueCode', 'evaluationTime'], { unique: true })
