@@ -7,6 +7,7 @@ import { TokenStatsModule } from './token-stats';
 import { MetricsModule } from './metrics/metrics.module';
 import { CacheModule } from '@nestjs/cache-manager';
 import { HeliusApiManager } from './rpc';
+import { AmmPoolModule } from './amm-pool';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { HeliusApiManager } from './rpc';
     RedisModule,
     TokenStatsModule,
     MetricsModule,
+    AmmPoolModule,
   ],
   providers: [SharedService, HeliusApiManager],
   exports: [
@@ -36,6 +38,7 @@ import { HeliusApiManager } from './rpc';
     TokenStatsModule,
     MetricsModule,
     HeliusApiManager,
+    AmmPoolModule,
   ],
 })
 export class SharedModule {}
