@@ -7,6 +7,7 @@ import { TokenStatsModule } from './token-stats';
 import { MetricsModule } from './metrics/metrics.module';
 import { CacheModule } from '@nestjs/cache-manager';
 import { HeliusApiManager } from './rpc';
+import { SignalRepository } from './repositories';
 
 @Module({
   imports: [
@@ -28,7 +29,7 @@ import { HeliusApiManager } from './rpc';
     TokenStatsModule,
     MetricsModule,
   ],
-  providers: [SharedService, HeliusApiManager],
+  providers: [SharedService, HeliusApiManager, SignalRepository],
   exports: [
     SharedService,
     TypeOrmModule,
@@ -36,6 +37,7 @@ import { HeliusApiManager } from './rpc';
     TokenStatsModule,
     MetricsModule,
     HeliusApiManager,
+    SignalRepository,
   ],
 })
 export class SharedModule {}
