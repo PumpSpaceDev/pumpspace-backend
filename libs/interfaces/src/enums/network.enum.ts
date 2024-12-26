@@ -5,10 +5,15 @@ export enum Network {
   /**
    * Solana blockchain network
    */
-  SOLANA = 'solana',
+  SOLANA = 'SOLANA',
 
   /**
    * Ethereum blockchain network
    */
-  ETHEREUM = 'ethereum',
+  ETHEREUM = 'ETHEREUM',
+
+  /**
+   * Binance Smart Chain network
+   */
+  BSC = 'BSC',
 }

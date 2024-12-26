@@ -3,7 +3,7 @@ import { ConfigService } from '@app/config';
 import { RedisService } from '@app/shared';
 import { Swap } from '@app/shared-swaps';
 import { IndicatorData } from '../../indicator/indicatorData';
-import { Network } from '../../indicator/types/network.enum';
+import { Network } from '@app/interfaces';
 
 const TRADE_DATA_KEY = 'trade-data';
 const INDICATOR_SCORE_KEY = 'indicator-score';
@@ -11,8 +11,8 @@ const TRADE_DATA_TTL = 60 * 60; // 1 hour
 const SCORE_TTL = 24 * 60 * 60; // 24 hours
 
 @Injectable()
-export class IndicatorCacheService {
-  private readonly logger: Logger = new Logger(IndicatorCacheService.name);
+export class SmartMoneyCacheService {
+  private readonly logger: Logger = new Logger(SmartMoneyCacheService.name);
 
   constructor(
     private readonly configService: ConfigService,

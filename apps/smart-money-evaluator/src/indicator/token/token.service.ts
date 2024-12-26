@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Platform } from '../types/platform.enum';
+import { Platform } from '@app/interfaces';
 
 @Injectable()
 export class TokenService {
