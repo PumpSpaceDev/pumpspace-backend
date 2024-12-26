@@ -17,9 +17,7 @@ export class AmmPoolService {
   private readonly logger = new Logger(AmmPoolService.name);
   private heliusApiManager: HeliusApiManager;
 
-  constructor(
-    private readonly configService: ConfigService,
-  ) {
+  constructor(private readonly configService: ConfigService) {
     this.heliusApiManager = new HeliusApiManager(
       this.configService.get('helius.apiKey'),
       this.logger,
@@ -28,9 +26,8 @@ export class AmmPoolService {
 
   async getTokenBalance(vaultAddress: string): Promise<number> {
     try {
-      const result = await this.heliusApiManager.getTokenAccountBalance(
-        vaultAddress,
-      );
+      const result =
+        await this.heliusApiManager.getTokenAccountBalance(vaultAddress);
       return result.value.uiAmount;
     } catch (error) {
       this.logger.error(
