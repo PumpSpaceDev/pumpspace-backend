@@ -1,0 +1,18 @@
+{
+  "name": "@pumpspace/signal-recorder",
+  "version": "0.0.1",
+  "description": "Signal recorder service for PumpSpace",
+  "author": "",
+  "private": true,
+  "license": "UNLICENSED",
+  "dependencies": {
+    "@nestjs/common": "^10.0.0",
+    "@nestjs/config": "^3.1.1",
+    "@nestjs/core": "^10.0.0",
+    "@nestjs/schedule": "^4.1.2",
+    "@nestjs/swagger": "^7.1.17",
+    "@nestjs/typeorm": "^10.0.1",
+    "telegram": "^2.26.12",
+    "typeorm": "^0.3.17"
+  }
+}
