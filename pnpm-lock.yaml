@@ -290,6 +290,61 @@ importers:
         specifier: ^2.6.11
         version: 2.6.12
 
+  apps/smart-money-evaluator:
+    dependencies:
+      '@app/config':
+        specifier: workspace:*
+        version: link:../../libs/config
+      '@app/shared':
+        specifier: workspace:*
+        version: link:../../libs/shared
+      '@app/shared-swaps':
+        specifier: workspace:*
+        version: link:../../libs/shared-swaps
+      '@nestjs/common':
+        specifier: ^10.0.0
+        version: 10.4.15(class-transformer@0.5.1)(class-validator@0.14.1)(reflect-metadata@0.1.14)(rxjs@7.8.1)
+      '@nestjs/core':
+        specifier: ^10.0.0
+        version: 10.4.15(@nestjs/common@10.4.15(class-transformer@0.5.1)(class-validator@0.14.1)(reflect-metadata@0.1.14)(rxjs@7.8.1))(@nestjs/microservices@10.4.15)(@nestjs/platform-express@10.4.15)(reflect-metadata@0.1.14)(rxjs@7.8.1)
+      '@nestjs/platform-express':
+        specifier: ^10.0.0
+        version: 10.4.15(@nestjs/common@10.4.15(class-transformer@0.5.1)(class-validator@0.14.1)(reflect-metadata@0.1.14)(rxjs@7.8.1))(@nestjs/core@10.4.15)
+      '@nestjs/typeorm':
+        specifier: ^10.0.0
+        version: 10.0.2(@nestjs/common@10.4.15(class-transformer@0.5.1)(class-validator@0.14.1)(reflect-metadata@0.1.14)(rxjs@7.8.1))(@nestjs/core@10.4.15)(reflect-metadata@0.1.14)(rxjs@7.8.1)(typeorm@0.3.20(ioredis@5.4.2)(pg@8.13.1)(redis@4.7.0)(ts-node@10.9.2(@types/node@20.17.10)(typescript@5.7.2)))
+      bignumber.js:
+        specifier: ^9.1.2
+        version: 9.1.2
+      graphlib:
+        specifier: ^2.1.8
+        version: 2.1.8
+      lodash:
+        specifier: ^4.17.21
+        version: 4.17.21
+      redis:
+        specifier: ^4.6.0
+        version: 4.7.0
+      reflect-metadata:
+        specifier: ^0.1.13
+        version: 0.1.14
+      rxjs:
+        specifier: ^7.8.1
+        version: 7.8.1
+      typeorm:
+        specifier: ^0.3.0
+        version: 0.3.20(ioredis@5.4.2)(pg@8.13.1)(redis@4.7.0)(ts-node@10.9.2(@types/node@20.17.10)(typescript@5.7.2))
+    devDependencies:
+      '@types/graphlib':
+        specifier: ^2.1.8
+        version: 2.1.12
+      '@types/lodash':
+        specifier: ^4.14.202
+        version: 4.17.13
+      '@types/node':
+        specifier: ^20.0.0
+        version: 20.17.10
+
   libs/config:
     dependencies:
       '@nestjs/common':
@@ -1728,6 +1783,9 @@ packages:
   '@types/graceful-fs@4.1.9':
     resolution: {integrity: sha512-olP3sd1qOEe5dXTSaFvQG+02VdRXcdytWLAZsAq1PecU8uqQAhkrnbli7DagjtXKW/Bl7YJbUsa8MPcuc8LHEQ==}
 
+  '@types/graphlib@2.1.12':
+    resolution: {integrity: sha512-abRfQWMphT2qlXwppQa+CTCtUz/GqxBeozQcMjnOFD/WOKD6sRgxkfG8vq1yagV03447BBzCYhuJ0wiNb+/r+Q==}
+
   '@types/http-cache-semantics@4.0.4':
     resolution: {integrity: sha512-1m0bIFVc7eJWyve9S0RnuRgcQqF/Xd5QsUZAZeQFr1Q3/p9JWoQQEqmVy+DPTNpGXwhgIetAoYF8JSc33q29QA==}
 
@@ -3145,6 +3203,9 @@ packages:
 
   graphemer@1.4.0:
     resolution: {integrity: sha512-EtKwoO6kxCL9WO5xipiHTZlSzBm7WLT627TqC/uVRd0HKmq8NXyebnNYxDoBi7wt8eTWrUrKXCOVaFq9x1kgag==}
+
+  graphlib@2.1.8:
+    resolution: {integrity: sha512-jcLLfkpoVGmH7/InMC/1hIvOPSUh38oJtGhvrOFGzioE1DZ+0YW16RgmOJhHiuWTvGiJQ9Z1Ik43JvkRPRvE+A==}
 
   has-flag@4.0.0:
     resolution: {integrity: sha512-EykJT/Q1KjTWctppgIAgfSO0tKVuZUjhgMr17kqTumMl6Afv3EISleU7qZUzoXDFTAHTDC4NOoG/ZxU3EvlMPQ==}
@@ -7127,6 +7188,8 @@ snapshots:
     dependencies:
       '@types/node': 20.17.10
 
+  '@types/graphlib@2.1.12': {}
+
   '@types/http-cache-semantics@4.0.4': {}
 
   '@types/http-errors@2.0.4': {}
@@ -8785,6 +8848,10 @@ snapshots:
   graceful-fs@4.2.11: {}
 
   graphemer@1.4.0: {}
+
+  graphlib@2.1.8:
+    dependencies:
+      lodash: 4.17.21
 
   has-flag@4.0.0: {}
 
