@@ -16,7 +16,9 @@ export class SignalEvaluationRepository extends Repository<SignalEvaluation> {
     });
   }
 
-  async findLatestEvaluation(signalId: number): Promise<SignalEvaluation | null> {
+  async findLatestEvaluation(
+    signalId: number,
+  ): Promise<SignalEvaluation | null> {
     return this.findOne({
       where: { signalId },
       order: { evaluationTime: 'DESC' },
