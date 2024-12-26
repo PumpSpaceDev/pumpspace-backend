@@ -49,6 +49,9 @@ export class SignalEvaluation {
   @Column({ type: 'decimal', precision: 20, scale: 10, nullable: false })
   compositeScore: number;
 
+  @Column({ type: 'decimal', precision: 20, scale: 10, nullable: true })
+  successRate: number;
+
   @Index()
   @Column({
     type: 'enum',

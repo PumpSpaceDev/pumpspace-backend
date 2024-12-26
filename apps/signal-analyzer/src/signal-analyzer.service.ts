@@ -7,18 +7,24 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Logger } from '@nestjs/common';
 import { SignalEvaluation } from './entities/signal-evaluation.entity';
-import { CreateEvaluationDto } from './dto/create-evaluation.dto';
 import {
   UpdateEvaluationDto,
   EvaluationStatus,
 } from './dto/update-evaluation.dto';
 import { PaginationDto } from './dto/pagination.dto';
+import { CreateEvaluationDto } from './dto/create-evaluation.dto';
+import { SignalRepository } from '@app/signal-recorder/repositories';
+import { AmmPoolService } from '@app/shared/amm-pool';
+import { Signal } from '@app/signal-recorder/entities/signal.entity';
+import { AmmPoolState } from '@app/interfaces/types/amm-pool-state.type';
 
 @Injectable()
 export class SignalAnalyzerService {
   constructor(
     @InjectRepository(SignalEvaluation)
     private signalEvaluationRepository: Repository<SignalEvaluation>,
+    private readonly signalRepository: SignalRepository,
+    private readonly ammPoolService: AmmPoolService,
     private readonly logger = new Logger(SignalAnalyzerService.name),
   ) {}
 
@@ -152,6 +158,145 @@ export class SignalAnalyzerService {
         'SignalAnalyzerService',
       );
       throw new BadRequestException('Failed to update evaluation');
+    }
+  }
+
+  async analyzeSignal(signalId: number): Promise<SignalEvaluation> {
+    try {
+      // Fetch the signal using SignalRepository
+      const signal: Signal = await this.signalRepository.findOne({
+        where: { id: signalId },
+      });
+      if (!signal) {
+        throw new NotFoundException(`Signal with ID ${signalId} not found`);
+      }
+
+      // Get current AMM pool state for price and reserve data
+      const poolState: AmmPoolState = await this.ammPoolService.getAmmPoolState(
+        {
+          baseVault: signal.address,
+          quoteVault: 'So11111111111111111111111111111111111111112', // WSOL vault
+          baseMint: signal.address,
+          quoteMint: 'So11111111111111111111111111111111111111112', // WSOL mint
+          baseReserve: 0,
+          quoteReserve: 0,
+        },
+      );
+
+      if (!poolState) {
+        throw new BadRequestException(
+          `Failed to get AMM pool state for token ${signal.symbol}`,
+        );
+      }
+
+      // Calculate metrics using pool state
+      const currentPrice = poolState.price;
+      const priceChange = ((currentPrice - signal.price) / signal.price) * 100;
+      const reserveChange =
+        ((poolState.reserve - signal.reserve) / signal.reserve) * 100;
+
+      // Calculate weights for composite score (can be adjusted based on requirements)
+      const priceWeight = 0.7;
+      const reserveWeight = 0.3;
+
+      // Calculate composite score
+      const compositeScore =
+        priceChange * priceWeight + reserveChange * reserveWeight;
+
+      // Calculate profit/loss and success rate
+      const profitLoss = currentPrice - signal.price;
+      const successRate = profitLoss > 0 ? 100 : 0; // Initial success rate based on current evaluation
+
+      // Create evaluation record
+      const evaluationDto: CreateEvaluationDto = {
+        signalId: signal.id,
+        signalUniqueCode: signal.uniqueCode,
+        evaluationTime: new Date(),
+        entryPrice: signal.price,
+        exitPrice: currentPrice,
+        profitLoss: currentPrice - signal.price,
+        roi: ((currentPrice - signal.price) / signal.price) * 100,
+        priceChange,
+        reserveChange,
+        marketCap: currentPrice * poolState.reserve,
+        priceWeight,
+        reserveWeight,
+        compositeScore,
+        successRate,
+        status: EvaluationStatus.COMPLETED,
+      };
+
+      return await this.create(evaluationDto);
+    } catch (error) {
+      this.logger.error(
+        `Failed to analyze signal with ID ${signalId}`,
+        error.message,
+        'SignalAnalyzerService',
+      );
+      throw error;
+    }
+  }
+
+  async bulkAnalyzeSignals(options?: {
+    startDate?: Date;
+    endDate?: Date;
+    limit?: number;
+  }): Promise<{ successful: number; failed: number }> {
+    try {
+      // Build query conditions
+      const where: any = {};
+      if (options?.startDate && options?.endDate) {
+        where.createdAt = {
+          gte: options.startDate,
+          lte: options.endDate,
+        };
+      }
+
+      // Fetch signals with pagination if limit is provided
+      const signals = await this.signalRepository.find({
+        where,
+        take: options?.limit,
+        order: { createdAt: 'DESC' },
+      });
+
+      let successful = 0;
+      let failed = 0;
+
+      // Process signals in batches to avoid overwhelming the system
+      const batchSize = 10;
+      for (let i = 0; i < signals.length; i += batchSize) {
+        const batch = signals.slice(i, i + batchSize);
+        const results = await Promise.allSettled(
+          batch.map((signal) => this.analyzeSignal(signal.id)),
+        );
+
+        // Count successes and failures
+        results.forEach((result) => {
+          if (result.status === 'fulfilled') {
+            successful++;
+          } else {
+            failed++;
+            this.logger.warn(
+              `Failed to analyze signal in bulk operation: ${result.reason}`,
+              'SignalAnalyzerService',
+            );
+          }
+        });
+
+        // Add a small delay between batches to prevent rate limiting
+        if (i + batchSize < signals.length) {
+          await new Promise((resolve) => setTimeout(resolve, 1000));
+        }
+      }
+
+      return { successful, failed };
+    } catch (error) {
+      this.logger.error(
+        'Failed to perform bulk signal analysis',
+        error.message,
+        'SignalAnalyzerService',
+      );
+      throw new BadRequestException('Failed to perform bulk signal analysis');
     }
   }
 }
