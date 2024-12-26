@@ -2,12 +2,14 @@ import {
   IsString,
   IsNumber,
   IsDateString,
+  IsEnum,
   Min,
   Max,
   Length,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
+import { EvaluationStatus } from './update-evaluation.dto';
 
 export class CreateEvaluationDto {
   @ApiProperty({ description: 'ID of the signal being evaluated' })
@@ -33,6 +35,22 @@ export class CreateEvaluationDto {
   @Min(0)
   @Type(() => Number)
   entryPrice: number;
+
+  @ApiProperty({ description: 'Exit price of the signal', minimum: 0 })
+  @IsNumber()
+  @Min(0)
+  @Type(() => Number)
+  exitPrice: number;
+
+  @ApiProperty({ description: 'Profit/Loss amount' })
+  @IsNumber()
+  @Type(() => Number)
+  profitLoss: number;
+
+  @ApiProperty({ description: 'Return on Investment percentage' })
+  @IsNumber()
+  @Type(() => Number)
+  roi: number;
 
   @ApiProperty({
     description: 'Price change percentage',
@@ -94,4 +112,23 @@ export class CreateEvaluationDto {
   @Max(100)
   @Type(() => Number)
   compositeScore: number;
+
+  @ApiProperty({
+    description: 'Success rate percentage',
+    minimum: 0,
+    maximum: 100,
+  })
+  @IsNumber()
+  @Min(0)
+  @Max(100)
+  @Type(() => Number)
+  successRate: number;
+
+  @ApiProperty({
+    description: 'Evaluation status',
+    enum: EvaluationStatus,
+    default: EvaluationStatus.PENDING,
+  })
+  @IsEnum(EvaluationStatus)
+  status: EvaluationStatus;
 }

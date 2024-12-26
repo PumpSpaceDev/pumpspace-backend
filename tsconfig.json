@@ -47,6 +47,15 @@
       ],
       "@pumpspace/data-collector/*": [
         "apps/data-collector/src/*"
+      ],
+      "@app/signal-recorder": [
+        "apps/signal-recorder/src"
+      ],
+      "@app/signal-recorder/*": [
+        "apps/signal-recorder/src/*"
+      ],
+      "@app/signal-recorder/repositories": [
+        "apps/signal-recorder/src/repositories"
       ]
     }
   }

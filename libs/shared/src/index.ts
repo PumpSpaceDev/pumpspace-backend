@@ -5,6 +5,7 @@ export * from './metrics';
 export * from './redis';
 export * from './rpc';
 export * from './utils';
+export * from './amm-pool';
 
 import { utilities, WinstonModule } from 'nest-winston';
 import { format, transports, Logform } from 'winston';
