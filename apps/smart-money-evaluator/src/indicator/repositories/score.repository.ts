@@ -1,7 +1,7 @@
+import { Score } from '@app/interfaces';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Score } from '@app/interfaces/entities/score.entity';
 
 @Injectable()
 export class ScoreRepository {
@@ -10,7 +10,7 @@ export class ScoreRepository {
     private readonly repository: Repository<Score>,
   ) {}
 
-  async add(entity: Score): Promise<Score> {
+  async add(entity: Partial<Score>): Promise<Score> {
     return this.repository.save(entity);
   }
 }

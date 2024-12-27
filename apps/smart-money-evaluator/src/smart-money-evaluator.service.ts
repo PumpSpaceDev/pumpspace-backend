@@ -7,9 +7,10 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { LessThan, Repository } from 'typeorm';
-import { SmartMoney } from './entities/smart-money.entity';
-import { SmartMoneyScore } from './entities/smart-money-score.entity';
 import { ConfigService } from '@app/config';
+import { Score, SmartMoney } from '@app/interfaces';
+import { IndicatorService } from './indicator/indicator.service';
+import { Cron } from '@nestjs/schedule';
 
 @Injectable()
 export class SmartMoneyEvaluatorService
@@ -21,12 +22,13 @@ export class SmartMoneyEvaluatorService
   constructor(
     @InjectRepository(SmartMoney)
     private readonly smartMoneyRepository: Repository<SmartMoney>,
-    @InjectRepository(SmartMoneyScore)
-    private readonly scoreRepository: Repository<SmartMoneyScore>,
+    @InjectRepository(Score)
+    private readonly scoreRepository: Repository<Score>,
     private readonly configService: ConfigService,
+    private readonly indicatorService: IndicatorService,
   ) {}
 
-  async evaluateAddress(address: string): Promise<number | null> {
+  async getScoreForAddress(address: string): Promise<number | null> {
     try {
       const smartMoney = await this.smartMoneyRepository.findOne({
         where: { address },
@@ -49,12 +51,13 @@ export class SmartMoneyEvaluatorService
     }
   }
 
-  async updateScore(address: string, solBalance: bigint): Promise<void> {
+  async updateScore(smartMoney: SmartMoney, solBalance: bigint): Promise<void> {
+    if (!smartMoney) {
+      this.logger.warn(`Cannot update score for non-existent address`);
+      throw new NotFoundException(`Address not found in smart money list`);
+    }
+    const address = smartMoney.address;
     try {
-      const smartMoney = await this.smartMoneyRepository.findOne({
-        where: { address },
-      });
-
       if (!smartMoney) {
         this.logger.warn(
           `Cannot update score for non-existent address ${address}`,
@@ -64,12 +67,14 @@ export class SmartMoneyEvaluatorService
         );
       }
 
-      const score = new SmartMoneyScore();
+      const score = new Score();
       score.address = address;
       score.solBalance = solBalance;
       score.time = new Date();
-      score.score = this.calculateScore(solBalance);
-
+      const { totalScore, indicators } =
+        await this.indicatorService.calculateScore(address, smartMoney.network);
+      score.score = totalScore;
+      await this.indicatorService.saveIndicators(indicators, address);
       await this.scoreRepository.save(score);
       this.logger.log(`Updated score for address ${address}`);
     } catch (error) {
@@ -84,9 +89,44 @@ export class SmartMoneyEvaluatorService
     }
   }
 
-  private calculateScore(solBalance: bigint): number {
-    const balanceInSol = Number(solBalance) / 1e9;
-    return Math.min(Math.log10(balanceInSol + 1) * 10, 100);
+  async updateScoreForAddress(address: string): Promise<void> {
+    const smartMoney = await this.smartMoneyRepository.findOne({
+      where: { address },
+    });
+
+    if (!smartMoney) {
+      this.logger.warn(
+        `Cannot update score for non-existent address ${address}`,
+      );
+      throw new NotFoundException(
+        `Address ${address} not found in smart money list`,
+      );
+    }
+
+    //TODO - solbalance need to be fetched from the blockchain
+    await this.updateScore(smartMoney, 0n);
+  }
+
+  @Cron('0 0 * * *')
+  async updateScores(): Promise<void> {
+    const batchSize = 100;
+    let offset = 0;
+    let smartMoneyBatch: SmartMoney[];
+
+    do {
+      smartMoneyBatch = await this.smartMoneyRepository.find({
+        where: { syncStatus: true },
+        take: batchSize,
+        skip: offset,
+      });
+
+      for (const smartMoney of smartMoneyBatch) {
+        //TODO - solbalance need to be fetched from the blockchain
+        await this.updateScore(smartMoney, 0n);
+      }
+
+      offset += batchSize;
+    } while (smartMoneyBatch.length === batchSize);
   }
 
   async onModuleInit() {
@@ -104,6 +144,7 @@ export class SmartMoneyEvaluatorService
     }
   }
 
+  // cleanup old score records, based on the configured retention period, now set to 30 days
   private async cleanup() {
     try {
       const { scoreRetentionDays } = this.configService.smartMoneyConfig;

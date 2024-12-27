@@ -8,9 +8,7 @@ import { Swap } from '@app/shared-swaps';
 import { IndicatorGraph } from './indicatorGraph';
 import { SOL_DECIMAL } from './constants';
 import { IndicatorRepository } from './repositories/indicator.repository';
-import { ScoreRepository } from './repositories/score.repository';
 import { TokenService } from './token/token.service';
-import { SmartMoneyCacheService } from './cache/indicator-cache.service';
 import BigNumber from 'bignumber.js';
 
 const SUPPORT_PLATFORMS = [Platform.Moonshot, Platform.PumpFun];
@@ -39,16 +37,14 @@ export class IndicatorService {
     @InjectRepository(Swap)
     private readonly swapRepository: Repository<Swap>,
     private readonly indicatorRepository: IndicatorRepository,
-    private readonly scoreRepository: ScoreRepository,
     private readonly tokenService: TokenService,
-    private readonly indicatorCacheService: SmartMoneyCacheService,
   ) {
     IndicatorGraph.initialize();
   }
 
   private async initializeIndicators(
     account: string,
-    network: Network,
+    network: Network[],
   ): Promise<{
     [key in IndicatorName]: IndicatorData;
   }> {
@@ -149,7 +145,7 @@ export class IndicatorService {
 
   private async calculateIndicators(
     account: string,
-    network: Network,
+    network: Network[],
   ): Promise<IndicatorData[]> {
     const indicators = await this.initializeIndicators(account, network);
 
@@ -169,42 +165,39 @@ export class IndicatorService {
 
   async calculateScore(
     account: string,
-    network: Network,
+    network: Network[],
   ): Promise<{
     indicators: IndicatorData[];
     totalScore: number;
     reason?: string;
   }> {
-    return this.indicatorCacheService.getScore(account, network, async () => {
-      try {
-        let totalScore: number = 0;
-        const indicators = await this.calculateIndicators(account, network);
-        for (const indicator of indicators) {
-          if (indicator.getValue().length === 0) {
-            throw new Error(
-              `Indicator value length = 0 : ${indicator.getName()}`,
-            );
-          }
-          this.logger.debug(
-            `account: ${account}, ${indicator.getName()} - value: ${
-              indicator.getValue()[0]
-            } score: ${indicator.calculateScore()}`,
+    try {
+      let totalScore: number = 0;
+      const indicators = await this.calculateIndicators(account, network);
+      for (const indicator of indicators) {
+        if (indicator.getValue().length === 0) {
+          throw new Error(
+            `Indicator value length = 0 : ${indicator.getName()}`,
           );
-          totalScore += indicator.calculateScore();
         }
-        this.logger.debug(`account: ${account}, TotalScore: ${totalScore}`);
-        return { indicators, totalScore, reason: '' };
-      } catch (e) {
-        this.logger.error(`ABNORMAL account: ${account}, TotalScore: -1`);
-        this.logger.error(e);
-        return { indicators: [], totalScore: -1, reason: e.message };
+        this.logger.debug(
+          `account: ${account}, ${indicator.getName()} - value: ${
+            indicator.getValue()[0]
+          } score: ${indicator.calculateScore()}`,
+        );
+        totalScore += indicator.calculateScore();
       }
-    });
+      this.logger.debug(`account: ${account}, TotalScore: ${totalScore}`);
+      return { indicators, totalScore, reason: '' };
+    } catch (e) {
+      this.logger.error(`ABNORMAL account: ${account}, TotalScore: -1`);
+      this.logger.error(e);
+      return { indicators: [], totalScore: -1, reason: e.message };
+    }
   }
 
   async saveIndicators(
     indicators: IndicatorData[],
-    totalScore: number,
     account: string,
   ): Promise<void> {
     for (const indicator of indicators) {
@@ -215,28 +208,20 @@ export class IndicatorService {
       entity.score = indicator.calculateScore();
       await this.indicatorRepository.upsert(entity, true);
     }
-
-    await this.scoreRepository.add({
-      address: account,
-      time: new Date(),
-      score: totalScore,
-    });
   }
 
   private async load30DaysTradeData(account: string): Promise<Swap[]> {
-    return this.indicatorCacheService.getTradeData(account, async () => {
-      const thirtyDaysAgo = new Date();
-      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-      return this.swapRepository.find({
-        where: {
-          signer: account,
-          timestamp: MoreThanOrEqual(thirtyDaysAgo),
-        },
-        order: {
-          timestamp: 'DESC',
-        },
-      });
+    return this.swapRepository.find({
+      where: {
+        signer: account,
+        timestamp: MoreThanOrEqual(thirtyDaysAgo),
+      },
+      order: {
+        timestamp: 'DESC',
+      },
     });
   }
 
@@ -250,9 +235,9 @@ export class IndicatorService {
 
   private async groupByToken(
     swaps: Swap[],
-    network: Network,
+    network: Network[],
   ): Promise<Record<string, SwapResult[]>> {
-    if (network !== Network.SOLANA) {
+    if (!network.includes(Network.SOLANA)) {
       throw new Error('Network not supported');
     }
 
@@ -291,7 +276,7 @@ export class IndicatorService {
 
   private mapToTokenCostAndProfit(
     groupedByToken: Record<string, SwapResult[]>,
-    network: Network,
+    network: Network[],
     _logPrefix: string,
   ): {
     token: string;
@@ -300,7 +285,7 @@ export class IndicatorService {
     buyCount: number;
     sellCount: number;
   }[] {
-    if (network !== Network.SOLANA) {
+    if (!network.includes(Network.SOLANA)) {
       throw new Error('Network not supported');
     }
 

@@ -3,6 +3,8 @@ import { IndicatorName } from '../enums/indicator-name.enum';
 
 @Entity('indicator')
 export class Indicator {
+  //TODO add base entity
+
   @PrimaryColumn()
   account: string;
 

@@ -1,11 +1,10 @@
 import { DataSource } from 'typeorm';
 import { config } from 'dotenv';
 import { join } from 'path';
-import { SmartMoney } from '../../apps/smart-money-evaluator/src/entities/smart-money.entity';
-import { Score } from '../../apps/smart-money-evaluator/src/entities/score.entity';
 import { Signal, SignalEvaluation } from '@app/shared/entities';
-import { TokenBucket } from '../../apps/analysis-statistics/src/entities/token-bucket.entity';
 import { Swap } from '@app/shared-swaps';
+import { Score, SmartMoney } from '@app/interfaces';
+import { TokenBucket } from 'apps/analysis-statistics/src/entities/token-bucket.entity';
 
 config();
 
