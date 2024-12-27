@@ -1,4 +1,6 @@
 export enum Platform {
-  Moonshot = 'Moonshot',
-  PumpFun = 'PumpFun',
+  PumpFun = 'pumpfun',
+  Moonshot = 'moonshot',
+  Other = 'other',
+  Unknown = 'unknown',
 }

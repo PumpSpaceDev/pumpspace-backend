@@ -7,7 +7,8 @@ import { TokenStatsModule } from './token-stats';
 import { MetricsModule } from './metrics/metrics.module';
 import { CacheModule } from '@nestjs/cache-manager';
 import { HeliusApiManager } from './rpc';
-import { SignalRepository } from './repositories';
+import { TokenService } from './token';
+import { Token } from '@app/interfaces';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { SignalRepository } from './repositories';
       useFactory: async (configService: ConfigService) => ({
         ...configService.databaseConfig,
         autoLoadEntities: true,
+        entities: [Token],
       }),
       inject: [ConfigService],
     }),
@@ -29,7 +31,7 @@ import { SignalRepository } from './repositories';
     TokenStatsModule,
     MetricsModule,
   ],
-  providers: [SharedService, HeliusApiManager, SignalRepository],
+  providers: [SharedService, HeliusApiManager, TokenService],
   exports: [
     SharedService,
     TypeOrmModule,
@@ -37,7 +39,7 @@ import { SignalRepository } from './repositories';
     TokenStatsModule,
     MetricsModule,
     HeliusApiManager,
-    SignalRepository,
+    TokenService,
   ],
 })
 export class SharedModule {}

@@ -2,17 +2,15 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule } from '@app/config';
 import { SharedModule } from '@app/shared';
-import { SignalAnalyzerController } from './signal-analyzer.controller';
-import { SignalAnalyzerService } from './signal-analyzer.service';
-import { SignalEvaluation } from '@app/shared/entities';
+import { Signal, SignalEvaluation } from '@app/interfaces';
+import { SignalEvaluationService } from './services/signalEvaluation.service';
 
 @Module({
   imports: [
     ConfigModule,
     SharedModule,
-    TypeOrmModule.forFeature([SignalEvaluation]),
+    TypeOrmModule.forFeature([SignalEvaluation, Signal]),
   ],
-  controllers: [SignalAnalyzerController],
-  providers: [SignalAnalyzerService],
+  providers: [SignalEvaluationService],
 })
 export class SignalAnalyzerModule {}

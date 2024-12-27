@@ -281,4 +281,25 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
       throw error;
     }
   }
+
+  async forEachMatchingKey(
+    pattern: string,
+    callback: (keys: string[]) => Promise<void>,
+  ): Promise<void> {
+    let cursor = '0';
+
+    do {
+      const [newCursor, keys] = await this.publisher.scan(
+        cursor,
+        'MATCH',
+        pattern,
+        'COUNT',
+        1000,
+      );
+      cursor = newCursor;
+      if (keys.length > 0) {
+        await callback(keys);
+      }
+    } while (cursor !== '0');
+  }
 }

@@ -3,11 +3,9 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { TokenBucket } from './entities/token-bucket.entity';
 import { ConfigService } from '@app/config';
-import { bnLayoutFormatter, RedisPubSubService } from '@app/shared';
+import { RedisPubSubService, TokenService } from '@app/shared';
 import { RedisCacheService, RedisService } from '@app/shared';
 import { RaydiumSwapEvent, SwapDto } from '@app/interfaces';
-import { HeliusApiManager } from '@app/shared';
-import { liquidityStateV4Layout } from '@raydium-io/raydium-sdk-v2';
 import BigNumber from 'bignumber.js';
 
 const RAYDIUM_AUTHORITY_V4 = '5Q544fKrFoe6tsEbD7S8EmxGTJYAKtTVhAW5Q5pge4j1';
@@ -37,7 +35,8 @@ export class AnalysisStatisticsService implements OnModuleInit {
     private readonly redisPubSubService: RedisPubSubService,
     private readonly redisService: RedisService,
     private readonly redisCacheService: RedisCacheService,
-    private readonly heliusApiManager: HeliusApiManager,
+    private readonly tokenService: TokenService,
+    // private readonly heliusApiManager: HeliusApiManager,
   ) {}
   onModuleInit() {
     this.redisPubSubService.subscribeRaydiumSwap(this.processTransaction);
@@ -104,42 +103,9 @@ export class AnalysisStatisticsService implements OnModuleInit {
         return;
       }
 
-      const poolInfo = await this.redisCacheService.getPoolInfo(
+      const poolInfo = await this.redisCacheService.getPoolInfoOrSet(
         transaction.amm,
-        async (amm) => {
-          const accountInfoResult = await this.heliusApiManager.getAccountInfo(
-            amm,
-            {
-              getIdentifier: () => amm,
-              callback: (identifier: string, count: number) => {
-                this.logger.error(
-                  `Request limit exceeded for ${identifier}. Total: ${count}`,
-                );
-                throw new Error(`Request limit exceeded for ${identifier}`);
-              },
-              getMaxExecutions: () => 5,
-            },
-            {
-              retries: 3,
-              timeout: 10000,
-            },
-          );
-          const data = accountInfoResult?.value?.data?.at(0);
-          if (!data) {
-            this.logger.error(`AMM Pool ${amm} not found.`);
-            throw new Error(`AMM Pool ${amm} not found.`);
-          }
-          const ammData = liquidityStateV4Layout.decode(Buffer.from(data));
-          bnLayoutFormatter(ammData);
-          return {
-            baseMint: ammData.baseMint.toString(),
-            quoteMint: ammData.quoteMint.toString(),
-            baseVault: ammData.baseVault.toString(),
-            quoteVault: ammData.quoteVault.toString(),
-            baseReserve: 0,
-            quoteReserve: 0,
-          };
-        },
+        this.tokenService.fetchAmmPoolInfo,
       );
 
       if (!poolInfo) {
@@ -161,6 +127,8 @@ export class AnalysisStatisticsService implements OnModuleInit {
         poolInfo.baseMint === WSOL_MINT
           ? poolInfo.quoteMint
           : poolInfo.baseMint;
+
+      this.tokenService.setAmmForToken(memeTokenMint, transaction.amm);
 
       let isBuy = false;
       if (poolInfo.baseMint === WSOL_MINT) {

@@ -10,8 +10,7 @@ import {
   ValidationPipe,
 } from '@nestjs/common';
 import { SignalRecorderService } from './signal-recorder.service';
-import { CreateSignalDto, UpdateSignalDto } from '@app/interfaces';
-import { Signal } from '@app/shared/entities';
+import { CreateSignalDto, Signal, UpdateSignalDto } from '@app/interfaces';
 import { PaginationDto } from './dto/pagination.dto';
 import {
   ApiTags,

@@ -6,10 +6,10 @@ import { Indicator } from '@app/interfaces/entities/indicator.entity';
 import { Network, Platform, IndicatorName } from '@app/interfaces';
 import { Swap } from '@app/shared-swaps';
 import { IndicatorGraph } from './indicatorGraph';
-import { SOL_DECIMAL } from './constants';
 import { IndicatorRepository } from './repositories/indicator.repository';
-import { TokenService } from './token/token.service';
 import BigNumber from 'bignumber.js';
+import { SOL_DECIMAL } from '@app/interfaces/constants';
+import { TokenService } from '@app/shared';
 
 const SUPPORT_PLATFORMS = [Platform.Moonshot, Platform.PumpFun];
 
@@ -266,7 +266,7 @@ export class IndicatorService {
 
     const finalResult: Record<string, SwapResult[]> = {};
     for (const token in result) {
-      const token_platform = await this.tokenService.getTokenPlatform();
+      const token_platform = await this.tokenService.getTokenPlatform(token);
       if (SUPPORT_PLATFORMS.includes(token_platform)) {
         finalResult[token] = result[token];
       }

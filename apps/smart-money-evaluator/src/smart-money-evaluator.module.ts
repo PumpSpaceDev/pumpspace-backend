@@ -5,7 +5,6 @@ import { SharedModule, RedisModule } from '@app/shared';
 import { IndicatorService } from './indicator/indicator.service';
 import { IndicatorRepository } from './indicator/repositories/indicator.repository';
 import { ScoreRepository } from './indicator/repositories/score.repository';
-import { TokenService } from './indicator/token/token.service';
 import { Swap } from '@app/shared-swaps';
 import { Indicator, Score } from '@app/interfaces/entities';
 import { DataCollectorModule } from '@pumpspace/data-collector';
@@ -26,11 +25,6 @@ import { DataCollectorModule } from '@pumpspace/data-collector';
       }),
     }),
   ],
-  providers: [
-    IndicatorService,
-    IndicatorRepository,
-    ScoreRepository,
-    TokenService,
-  ],
+  providers: [IndicatorService, IndicatorRepository, ScoreRepository],
 })
 export class SmartMoneyEvaluatorModule {}

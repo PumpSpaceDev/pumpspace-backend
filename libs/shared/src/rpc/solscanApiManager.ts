@@ -1,88 +1,42 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { RpcResourceMonitor } from './RpcResourceMonitor';
 import { ConfigService } from '@app/config';
-import { AccountInfo, Connection } from '@solana/web3.js';
 import { FetchOptions } from './types';
 
-export interface HeliusRpcResponse<T> {
-  jsonrpc: string;
-  id: string | number;
-  result: T;
-}
-
-export interface TokenAccountBalanceResult {
-  context: {
-    slot: number;
-  };
-  value: {
-    amount: string;
-    decimals: number;
-    uiAmount: number;
-    uiAmountString: string;
-  };
-}
-export interface AccountInfoResult {
-  context: {
-    slot: number;
-  };
-  value: AccountInfo<string[]> | null;
-}
 @Injectable()
-export class HeliusApiManager {
+export class SolscanApiManager {
+  private readonly solscanApiBaseUrl = 'https://pro-api.solscan.io/v2.0';
   private requestCounts: Map<string, { count: number; lastAccessed: number }> =
     new Map();
   private static readonly EXPIRATION_TIME = 60 * 1000; // 60 seconds
   private cleanupInterval: NodeJS.Timeout;
-  private rpcUrl: string;
-  private readonly logger = new Logger(HeliusApiManager.name);
+  private logger: Logger = new Logger(SolscanApiManager.name);
+  private apikey: string;
   constructor(private readonly configService: ConfigService) {
     this.cleanupInterval = setInterval(
       () => this.cleanupOldRequests(),
-      HeliusApiManager.EXPIRATION_TIME,
+      SolscanApiManager.EXPIRATION_TIME,
     );
-
-    this.rpcUrl = `${this.configService.heliusConfig.baseUrl}${this.configService.heliusConfig.apiKey}`;
-    if (
-      !this.rpcUrl.startsWith('http://') &&
-      !this.rpcUrl.startsWith('https://')
-    ) {
-      throw new Error('Invalid RPC URL');
-    }
+    this.apikey = this.configService.solscanConfig.apiKey;
   }
 
-  private connection: Connection | null = null;
-  public getConnection(): Connection {
-    if (!this.connection) {
-      this.connection = new Connection(this.rpcUrl);
-    }
-    return this.connection;
-  }
-
-  public async fetchHeliusRpc<T>(
-    method: string,
-    params: any[],
+  public async fetchSolscanApi<T>(
+    endpoint: string,
+    params: Record<string, any> = {},
     monitor?: RpcResourceMonitor,
     options: FetchOptions = { retries: 3, timeout: 15000 },
   ): Promise<T> {
     const { retries = 3, timeout = 15000 } = options;
     await RateLimiter.rateLimit(this.logger);
-
+    endpoint = endpoint.replace(/^\//, '');
+    const urlParams = new URLSearchParams(params);
+    const url = `${this.solscanApiBaseUrl}/${endpoint}?${urlParams.toString()}`;
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), timeout);
 
-    const requestBody = {
-      jsonrpc: '2.0',
-      id: Date.now(),
-      method,
-      params,
-    };
-
     const requestOptions = {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(requestBody),
+      method: 'GET',
+      headers: { token: this.apikey },
       signal: controller.signal,
     };
 
@@ -107,32 +61,30 @@ export class HeliusApiManager {
     }
 
     try {
-      const response = await fetch(this.rpcUrl, requestOptions);
+      const response = await fetch(url, requestOptions);
       clearTimeout(timeoutId);
-
       if (!response.ok) {
         const errorText = await response.text();
         this.logger.error(
-          `RPC request failed: ${response.status} - ${errorText}`,
+          `API request failed: ${response.status} - ${errorText}`,
         );
-        throw new Error(`RPC request failed: ${response.status}`);
+        throw new Error(`API request failed: ${response.status}`);
       }
 
-      const data = (await response.json()) as HeliusRpcResponse<T>;
-      if (!data.result) {
-        throw new Error('No result returned from RPC');
+      const data = (await response.json()).data as T;
+      if (!data) {
+        throw new Error('No data returned from API');
       }
-      return data.result;
+      return data;
     } catch (error) {
       clearTimeout(timeoutId);
-      this.logger.error(`RPC call failed: ${method}`);
+      this.logger.error(`API call failed: ${url}`);
       this.logger.error(error);
       if (retries > 0) {
-        this.logger.warn(
-          `Retrying RPC call (${retries} retries left): ${method}`,
-        );
+        this.logger.warn(`Retrying API call (${retries} retries left): ${url}`);
+        // add some delay before retrying
         await new Promise((resolve) => setTimeout(resolve, 500));
-        return this.fetchHeliusRpc(method, params, monitor, {
+        return this.fetchSolscanApi(endpoint, params, monitor, {
           retries: retries - 1,
           timeout,
         });
@@ -142,47 +94,17 @@ export class HeliusApiManager {
     }
   }
 
-  public async getTokenAccountBalance(
-    address: string,
-    monitor?: RpcResourceMonitor,
-    options?: FetchOptions,
-  ): Promise<TokenAccountBalanceResult> {
-    return this.fetchHeliusRpc<TokenAccountBalanceResult>(
-      'getTokenAccountBalance',
-      [address],
-      monitor,
-      options,
-    );
-  }
-
-  public async getAccountInfo(
-    address: string,
-    monitor?: RpcResourceMonitor,
-    options?: FetchOptions,
-  ): Promise<AccountInfoResult> {
-    return this.fetchHeliusRpc<AccountInfoResult>(
-      'getAccountInfo',
-      [
-        address,
-        {
-          encoding: 'base64',
-        },
-      ],
-      monitor,
-      options,
-    );
-  }
-
   private cleanupOldRequests(): void {
     const now = Date.now();
+    const EXPIRATION_TIME = 60 * 1000; // 60 seconds
+
     for (const [key, record] of this.requestCounts) {
-      if (now - record.lastAccessed > HeliusApiManager.EXPIRATION_TIME) {
+      if (now - record.lastAccessed > EXPIRATION_TIME) {
         this.requestCounts.delete(key);
       }
     }
   }
 }
-
 class RateLimiter {
   private static requestCountPerMinute = 0;
   private static requestCountPerSecond = 0;

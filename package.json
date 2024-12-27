@@ -68,6 +68,8 @@
     "@nestjs/terminus": "^10.2.3",
     "@nestjs/typeorm": "^10.0.2",
     "@raydium-io/raydium-sdk-v2": "0.1.98-alpha",
+    "@solana/buffer-layout": "^4.0.1",
+    "@solana/spl-token": "^0.4.9",
     "@solana/web3.js": "^1.98.0",
     "@types/fs-extra": "^11.0.4",
     "@types/uuid": "^10.0.0",

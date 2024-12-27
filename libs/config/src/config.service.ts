@@ -210,4 +210,10 @@ export class ConfigService {
       baseUrl: 'https://mainnet.helius-rpc.com/?api-key=',
     };
   }
+
+  get solscanConfig() {
+    return {
+      apiKey: this.getRequiredConfig<string>('SOLSCAN_API_KEY'),
+    };
+  }
 }

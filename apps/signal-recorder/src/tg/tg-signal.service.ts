@@ -5,11 +5,10 @@ import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DeepPartial } from 'typeorm';
 import { Cron, CronExpression } from '@nestjs/schedule';
-import { Signal } from '@app/shared/entities';
 import { Network } from '@app/interfaces/enums/network.enum';
-import { SignalType } from '@app/interfaces/enums/signal-type.enum';
 import { TelegramClientService } from './telegram-client.service';
 import { MessageFormat, TokenRecommond } from './message.format';
+import { EvaluationStatus, Signal } from '@app/interfaces';
 
 const TGCHANNELLASTSYNCTIME_PATH = path.resolve(
   __dirname,
@@ -88,17 +87,17 @@ export class TgSignalService implements OnModuleInit {
       endTimestamp,
     );
 
+    //TODO incomplete
     const signals = tokenRecommondResult.map((item) => {
       const signal: DeepPartial<Signal> = {
-        uniqueCode: item.uniqueCode,
-        address: item.token.address,
+        tokenAddress: item.token.address,
         symbol: item.token.symbol || '',
-        signal: SignalType.BUY, // Default to BUY signal for now
+        // signal: SignalType.BUY, // Default to BUY signal for now
         network:
           Network[item.network.toUpperCase() as keyof typeof Network] ||
           Network.SOLANA,
-        recommondTime: new Date(item.timestamp * 1000),
-        done: false,
+        time: new Date(item.timestamp * 1000),
+        evaluationStatus: EvaluationStatus.PENDING,
       };
 
       if (typeof item.token.price === 'number') {
