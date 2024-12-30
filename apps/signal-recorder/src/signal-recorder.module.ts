@@ -4,19 +4,23 @@ import { ConfigModule } from '@app/config';
 import { SharedModule } from '@app/shared';
 import { SignalRecorderController } from './signal-recorder.controller';
 import { SignalRecorderService } from './signal-recorder.service';
-import { TgSignalService } from './tg/tg-signal.service';
-import { TelegramClientService } from './tg/telegram-client.service';
-import { MessageFormat } from './tg/message.format';
-import { Signal } from '@app/interfaces';
+import { Signal, SmartMoney } from '@app/interfaces';
+import { SignalRepository } from '@app/signal-analyzer/repositories/signal.repository';
+import { TgChannelService } from './tgclient/tgChannel.service';
+import { SmartMoneyRepository } from 'apps/smart-money-evaluator/src/repositories/smart-money.repository';
 
 @Module({
-  imports: [ConfigModule, SharedModule, TypeOrmModule.forFeature([Signal])],
+  imports: [
+    ConfigModule,
+    SharedModule,
+    TypeOrmModule.forFeature([Signal, SmartMoney]),
+  ],
   controllers: [SignalRecorderController],
   providers: [
     SignalRecorderService,
-    TgSignalService,
-    TelegramClientService,
-    MessageFormat,
+    SignalRepository,
+    TgChannelService,
+    SmartMoneyRepository,
   ],
 })
 export class SignalRecorderModule {}

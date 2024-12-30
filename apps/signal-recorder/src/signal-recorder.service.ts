@@ -6,7 +6,12 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { CreateSignalDto, Signal, UpdateSignalDto } from '@app/interfaces';
+import {
+  CreateSignalDto,
+  EvaluationStatus,
+  Signal,
+  UpdateSignalDto,
+} from '@app/interfaces';
 import { PaginationDto } from './dto/pagination.dto';
 
 @Injectable()
@@ -35,7 +40,7 @@ export class SignalRecorderService {
       const [items, total] = await this.signalRepository.findAndCount({
         skip: pagination.offset,
         take: pagination.limit,
-        order: { recommondTime: 'DESC' },
+        order: { time: 'DESC' },
       });
       return { items, total };
     } catch (error) {
@@ -82,7 +87,10 @@ export class SignalRecorderService {
   async markAsDone(uniqueCode: string): Promise<Signal> {
     try {
       await this.findOne(uniqueCode); // Verify record exists
-      await this.signalRepository.update({ uniqueCode }, { done: true });
+      await this.signalRepository.update(
+        { uniqueCode },
+        { evaluationStatus: EvaluationStatus.COMPLETED },
+      );
       return this.findOne(uniqueCode);
     } catch (error) {
       if (error instanceof NotFoundException) {

@@ -7,9 +7,13 @@ import { EvaluationStatusTransformer } from '../transformers/evaluation-status.t
 
 @Entity('signal')
 @Index(['signalName']) // Add index for signalName
+@Index(['uniqueCode'], { unique: true })
 export class Signal {
   @PrimaryGeneratedColumn()
   id: number;
+
+  @Column({ type: 'varchar', nullable: false, length: 100, unique: true }) // Unique code, max length 100, for example: message.id_chat.id_address
+  uniqueCode: string;
 
   @Column({ type: 'varchar', nullable: false, length: 44 }) // Solana address max length is 44
   tokenAddress: string; // The token address for this push

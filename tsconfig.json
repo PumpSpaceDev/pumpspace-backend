@@ -57,6 +57,12 @@
       "@app/signal-recorder/*": [
         "apps/signal-recorder/src/*"
       ],
+      "@app/signal-analyzer": [
+        "apps/signal-analyzer/src"
+      ],
+      "@app/signal-analyzer/*": [
+        "apps/signal-analyzer/src/*"
+      ],
       "@app/shared/repositories": [
         "libs/shared/src/repositories"
       ]

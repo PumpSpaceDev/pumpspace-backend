@@ -1,19 +1,18 @@
 import { Api } from 'telegram';
 import { Channel_Default } from './format/channel_default.format';
-import { Channel_Gmgnsignals } from './format/channel_gmgnsignals.format';
+import { channel_Gmgnsignals } from './format/channel_gmgnsignals.format';
 import { Logger } from '@nestjs/common';
+import { Network } from '@app/interfaces';
 
 export interface TokenRecommond {
   uniqueCode: string;
   channelUsername: string;
-  network: string;
+  network: Network; //"solana|ethereum|bsc|base"
   timestamp: number;
   token: {
     address: string;
     devAddress?: string;
     symbol?: string;
-    price?: number;
-    reserve?: number;
   };
   records: {
     address: string;
@@ -35,6 +34,12 @@ export interface MatchedEntity {
 export class MessageFormat {
   private readonly logger: Logger = new Logger(MessageFormat.name);
 
+  /**
+   *  Format messages
+   * @param chatId
+   * @param messages
+   * @returns
+   */
   async format(
     chatId: string,
     messages: Api.Message[],
@@ -54,36 +59,42 @@ export class MessageFormat {
     return result.filter((item) => item) as TokenRecommond[];
   }
 
+  /**
+   *  Format single message
+   * @param chatId
+   * @param message
+   * @returns
+   */
   async formatSingle(
     chatId: string,
     message: Api.Message,
   ): Promise<TokenRecommond[]> {
-    let result: TokenRecommond[] = [];
     const entities = this.matchEntity(message.message, message.entities || []);
+    let tokenRecommond: TokenRecommond | null = null;
     switch (chatId) {
       case 'gmgnsignals':
-        const gmgnTokenRecommond = await Channel_Gmgnsignals.format(
-          message,
-          entities,
-        );
-        result = gmgnTokenRecommond ? [gmgnTokenRecommond] : [];
+        tokenRecommond = await channel_Gmgnsignals.format(message, entities);
         break;
+
+      // Add more channel format here...
 
       default:
-        const defaultTokenRecommond = await Channel_Default.format(
-          message,
-          entities,
-        );
-        result = defaultTokenRecommond ? [defaultTokenRecommond] : [];
+        tokenRecommond = await Channel_Default.format(message, entities);
         break;
     }
-
+    const result = tokenRecommond ? [tokenRecommond] : [];
+    // check result, can not be null or undefined in result array
     if (!this.checkFormatResult(result)) {
       return [];
     }
     return result;
   }
 
+  /**
+   * Check format result
+   * @param result
+   * @returns boolean
+   */
   private checkFormatResult(result: TokenRecommond[]): boolean {
     if (result.length === 0) {
       return false;
@@ -108,6 +119,12 @@ export class MessageFormat {
     return true;
   }
 
+  /**
+   *  Match entity
+   * @param message string
+   * @param entities  Api.TypeMessageEntity[]
+   * @returns
+   */
   private matchEntity(
     message: string,
     entities: Api.TypeMessageEntity[],

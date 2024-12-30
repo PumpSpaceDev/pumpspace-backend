@@ -5,6 +5,8 @@ import { MarketCapLevel, Signal } from '@app/interfaces';
 
 @Injectable()
 export class SignalRepository extends Repository<Signal> {
+  private static readonly BATCH_SIZE = 1000;
+
   constructor(private dataSource: DataSource) {
     super(Signal, dataSource.createEntityManager());
   }
@@ -48,6 +50,30 @@ export class SignalRepository extends Repository<Signal> {
         return [240, 720, 1440, 4320, 8640]; // 4h, 12h, 24h, 72h, 144h
       default:
         return [60]; // default to hourly
+    }
+  }
+
+  public async addManyWithIgnore(records: Partial<Signal>[]): Promise<void> {
+    if (!records?.length) {
+      return;
+    }
+
+    let recordsToAdd = [];
+    for (let i = 0; i < records.length; i++) {
+      recordsToAdd.push(records[i]);
+      if (
+        recordsToAdd.length === SignalRepository.BATCH_SIZE ||
+        i === records.length - 1
+      ) {
+        const queryBuilder = this.createQueryBuilder()
+          .insert()
+          .into(Signal)
+          .values(recordsToAdd)
+          .orIgnore();
+
+        await queryBuilder.execute();
+        recordsToAdd = [];
+      }
     }
   }
 }

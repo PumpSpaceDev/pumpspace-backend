@@ -7,6 +7,13 @@ export class EvaluationStatusTransformer implements ValueTransformer {
   }
 
   from(value: string): EvaluationStatus {
+    if (!Object.values(EvaluationStatus).includes(value as EvaluationStatus)) {
+      throw new Error(
+        `Invalid EvaluationStatus value: ${value}. Expected one of ${Object.values(
+          EvaluationStatus,
+        ).join(', ')}`,
+      );
+    }
     return EvaluationStatus[value as keyof typeof EvaluationStatus];
   }
 }

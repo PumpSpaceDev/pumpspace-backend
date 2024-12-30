@@ -11,6 +11,7 @@ import { ConfigService } from '@app/config';
 import { Score, SmartMoney } from '@app/interfaces';
 import { IndicatorService } from './indicator/indicator.service';
 import { Cron } from '@nestjs/schedule';
+import { SmartMoneyRepository } from './repositories/smart-money.repository';
 
 @Injectable()
 export class SmartMoneyEvaluatorService
@@ -20,8 +21,8 @@ export class SmartMoneyEvaluatorService
   private cleanupInterval: NodeJS.Timeout;
 
   constructor(
-    @InjectRepository(SmartMoney)
-    private readonly smartMoneyRepository: Repository<SmartMoney>,
+    @InjectRepository(SmartMoneyRepository)
+    private readonly smartMoneyRepository: SmartMoneyRepository,
     @InjectRepository(Score)
     private readonly scoreRepository: Repository<Score>,
     private readonly configService: ConfigService,

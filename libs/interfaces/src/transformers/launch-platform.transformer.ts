@@ -7,6 +7,13 @@ export class LaunchPlatformTransformer implements ValueTransformer {
   }
 
   from(value: string): Platform {
+    if (!Object.values(Platform).includes(value as Platform)) {
+      throw new Error(
+        `Invalid Platform value: ${value}. Expected one of ${Object.values(
+          Platform,
+        ).join(', ')}`,
+      );
+    }
     return Platform[value as keyof typeof Platform];
   }
 }

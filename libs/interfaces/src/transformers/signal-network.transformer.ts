@@ -1,7 +1,11 @@
 import { Network } from '../enums';
 
 export class SignalNetworkTransformer {
-  to(data: string): Network {
+  to(data: Network): string {
+    return data;
+  }
+
+  from(data: string): Network {
     if (!Object.values(Network).includes(data as Network)) {
       throw new Error(
         `Invalid Network value: ${data}. Expected one of ${Object.values(
@@ -10,9 +14,5 @@ export class SignalNetworkTransformer {
       );
     }
     return data as Network;
-  }
-
-  from(data: Network): string {
-    return data;
   }
 }

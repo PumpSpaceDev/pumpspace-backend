@@ -1,14 +1,13 @@
 import { Api } from 'telegram';
 import { MatchedEntity, TokenRecommond } from '../message.format';
-import { Network } from '@app/interfaces/enums/network.enum';
-import {
-  ADDRESSTYPE_KOL,
-  ADDRESSTYPE_SMARTMONEY,
-  ADDRESSTYPE_OTHER,
-  NETWORK_SOLANA,
-} from '../constants';
+import { Network, SmartMoneyType } from '@app/interfaces';
 
-export class Channel_Gmgnsignals {
+// Channel_Gmgn format
+export class channel_Gmgnsignals {
+  /**
+   * format
+   * @param message
+   */
   static async format(
     message: Api.Message,
     entities: MatchedEntity[],
@@ -18,7 +17,7 @@ export class Channel_Gmgnsignals {
     const matchRes = {
       uniqueCode: '',
       channelUsername: chat?.username || chat?.id,
-      network: Network[NETWORK_SOLANA.toUpperCase() as keyof typeof Network],
+      network: Network.SOLANA,
       timestamp: message.date,
       token: {
         address: '',
@@ -27,13 +26,13 @@ export class Channel_Gmgnsignals {
       records: [],
     } as TokenRecommond;
 
-    let type = ADDRESSTYPE_OTHER;
+    let type = SmartMoneyType.OTHER;
     const typeRegex = /(KOL|Smart Money)\sBuy/;
     const typeText = (text.match(typeRegex) || [])[1];
     if (typeText == 'KOL') {
-      type = ADDRESSTYPE_KOL;
+      type = SmartMoneyType.KOL;
     } else if (typeText == 'Smart Money') {
-      type = ADDRESSTYPE_SMARTMONEY;
+      type = SmartMoneyType.SMART;
     } else {
       return null;
     }
@@ -44,25 +43,23 @@ export class Channel_Gmgnsignals {
     const ca = (text.match(caRegex) || [])[1];
     const symbol = (text.match(symbolRegex) || [])[1];
     let buyers = [];
-    if (type === ADDRESSTYPE_KOL) {
+    if (type === SmartMoneyType.KOL) {
       const kolBuyersRegex = /^(.*?)\s+\d+[a-z]+\sago/gm;
       buyers = [...text.matchAll(kolBuyersRegex)].map((match) =>
         match[1].trim(),
       );
-    } else if (type === ADDRESSTYPE_SMARTMONEY) {
+    } else if (type === SmartMoneyType.SMART) {
       const smartMoneyBuyersRegex = /^([A-Za-z0-9.]+)\s+\d+[a-z]+\sago/gm;
       buyers = [...text.matchAll(smartMoneyBuyersRegex)].map((match) =>
         match[1].trim(),
       );
     }
 
-    const entityMap = entities.reduce(
-      (acc, item) => {
-        acc[item.matchedText] = item.entity;
-        return acc;
-      },
-      {} as Record<string, any>,
-    );
+    // entities map
+    const entityMap = entities.reduce((acc, item) => {
+      acc[item.matchedText] = item.entity;
+      return acc;
+    });
 
     const uniqueCode = `${message.id}_${chat?.id}_${ca}`;
     matchRes.uniqueCode = uniqueCode;
@@ -72,7 +69,7 @@ export class Channel_Gmgnsignals {
       .map((buyer) => {
         const url = entityMap[buyer]?.url;
         if (url) {
-          const address = Channel_Gmgnsignals.extractAddress(url);
+          const address = this.extractAddress(url);
           if (address) {
             return {
               address,
@@ -82,14 +79,12 @@ export class Channel_Gmgnsignals {
           }
         }
       })
-      .filter(
-        (record): record is NonNullable<typeof record> => record !== null,
-      );
+      .filter((record) => record);
 
     return matchRes;
   }
 
-  static extractAddress(url: string): string | null {
+  static extractAddress(url) {
     const addressRegex = /https:\/\/gmgn\.ai\/sol\/address\/([A-Za-z0-9]+)/;
     const match = url.match(addressRegex);
     return match ? match[1] : null;

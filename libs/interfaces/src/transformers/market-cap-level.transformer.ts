@@ -1,7 +1,11 @@
 import { MarketCapLevel } from '../enums/market-cap-level.enum';
 
 export class MarketCapLevelTransformer {
-  to(data: string): MarketCapLevel {
+  to(data: MarketCapLevel): string {
+    return data;
+  }
+
+  from(data: string): MarketCapLevel {
     if (!Object.values(MarketCapLevel).includes(data as MarketCapLevel)) {
       throw new Error(
         `Invalid MarketCapLevel value: ${data}. Expected one of ${Object.values(
@@ -10,9 +14,5 @@ export class MarketCapLevelTransformer {
       );
     }
     return data as MarketCapLevel;
-  }
-
-  from(data: MarketCapLevel): string {
-    return data;
   }
 }

@@ -5,3 +5,4 @@ export * from './platform.enum';
 export * from './evaluation-status.enum';
 export * from './market-cap-level.enum';
 export * from './signal-category.enum';
+export * from './smart-money-type.enum';
